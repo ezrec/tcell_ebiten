@@ -225,21 +225,21 @@ func (et *etcell) Update() (err error) {
 	var posted bool
 
 	if et.mouse_capture.Empty() || cursor.In(et.mouse_capture) {
-        mouse_mapping := et.mouse_mapping
-        if mouse_mapping.Empty() {
-            mouse_mapping = image.Rect(0, 0, et.grid_size.X, et.grid_size.Y)
-        }
+		mouse_mapping := et.mouse_mapping
+		if mouse_mapping.Empty() {
+			mouse_mapping = image.Rect(0, 0, et.grid_size.X, et.grid_size.Y)
+		}
 
-        mouse_capture := et.mouse_capture
-        if mouse_capture.Empty() {
-            mouse_capture = et.grid_image.Bounds()
-        }
+		mouse_capture := et.mouse_capture
+		if mouse_capture.Empty() {
+			mouse_capture = et.grid_image.Bounds()
+		}
 
 		mouse := cursor.Sub(et.mouse_capture.Min)
 		if !et.focused {
 			et.PostEvent(tcell.NewEventFocus(true))
 			et.focused = true
-		    posted = true
+			posted = true
 		}
 		var buttons tcell.ButtonMask
 		for e_button, t_button := range ebiten_button_map {
@@ -248,8 +248,14 @@ func (et *etcell) Update() (err error) {
 			}
 		}
 
-        mouse_x := (mouse.X * mouse_mapping.Dx() / et.mouse_capture.Dx()) + et.mouse_mapping.Min.X
-        mouse_y := (mouse.Y * mouse_mapping.Dy() / et.mouse_capture.Dy()) + et.mouse_mapping.Min.Y
+		mouse_x := mouse.X
+		mouse_y := mouse.Y
+		if !et.mouse_capture.Empty() {
+			mouse_x = (mouse_x * mouse_mapping.Dx() / et.mouse_capture.Dx())
+			mouse_y = (mouse_y * mouse_mapping.Dy() / et.mouse_capture.Dy())
+		}
+		mouse_x += et.mouse_mapping.Min.X
+		mouse_y += et.mouse_mapping.Min.Y
 
 		et.PostEvent(tcell.NewEventMouse(mouse_x, mouse_y, buttons, modMask()))
 
