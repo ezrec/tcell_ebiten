@@ -118,7 +118,7 @@ func (et *etcell) SetInputCapture(game, screen image.Rectangle) {
 
 // SetCursorColor sets the color of the 'hardware' cursor.
 func (et *etcell) SetCursorColor(color tcell.Color) {
-    et.cursor_color = color
+	et.cursor_color = color
 }
 
 // ////////// ebiten interfaces ////////////////////
@@ -278,7 +278,7 @@ func (et *etcell) Update() (err error) {
 					t_key := tcell.KeyCtrlA + tcell.Key(e_key-ebiten.KeyA)
 					ev := tcell.NewEventKey(t_key, rune(0), mods & ^tcell.ModCtrl)
 					et.PostEvent(ev)
-		            posted = true
+					posted = true
 				}
 			}
 		} else {
@@ -286,7 +286,7 @@ func (et *etcell) Update() (err error) {
 			for _, key_rune := range key_runes {
 				ev := tcell.NewEventKey(tcell.KeyRune, key_rune, mods & ^tcell.ModShift)
 				et.PostEvent(ev)
-                posted = true
+				posted = true
 			}
 		}
 
@@ -299,7 +299,7 @@ func (et *etcell) Update() (err error) {
 			if ok {
 				ev := tcell.NewEventKey(t_key, rune(0), mods)
 				et.PostEvent(ev)
-                posted = true
+				posted = true
 			}
 		}
 
@@ -310,16 +310,16 @@ func (et *etcell) Update() (err error) {
 		if et.focused {
 			et.PostEvent(tcell.NewEventFocus(false))
 			et.focused = false
-            posted = true
-        }
+			posted = true
+		}
 	}
 
-    // Always post a time event, if no other event was fired.
+	// Always post a time event, if no other event was fired.
 	if !posted {
-        ev := &tcell.EventTime{}
-        ev.SetEventNow()
-	    et.PostEvent(ev)
-    }
+		ev := &tcell.EventTime{}
+		ev.SetEventNow()
+		et.PostEvent(ev)
+	}
 
 	return
 }
