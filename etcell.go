@@ -736,6 +736,14 @@ func (et *etcell) Show() {
 				attr = tcell.AttrNone
 			}
 
+			if fg == tcell.ColorDefault {
+				fg = tcell.ColorWhite
+			}
+
+			if bg == tcell.ColorDefault {
+				bg = tcell.ColorBlack
+			}
+
 			// Reverse fg & bg if asked to.
 			if (attr & tcell.AttrReverse) != 0 {
 				fg, bg = bg, fg
