@@ -7,7 +7,7 @@ require (
 	github.com/hajimehoshi/bitmapfont/v3 v3.1.0
 	github.com/hajimehoshi/ebiten/v2 v2.7.8
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/image v0.18.0
+	golang.org/x/image v0.19.0
 )
 
 require (
@@ -22,9 +22,9 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.3 // indirect
-	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/term v0.17.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
