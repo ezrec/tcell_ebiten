@@ -1,6 +1,6 @@
 module github.com/ezrec/tcell_ebiten
 
-go 1.22.5
+go 1.21
 
 require (
 	github.com/gdamore/tcell/v2 v2.7.4

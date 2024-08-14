@@ -19,7 +19,7 @@ type GameScreen interface {
 	ebiten.Game
 
 	// Set the color of the text 'hardware' cursor.
-    SetCursorColor(color tcell.Color)
+	SetCursorColor(color tcell.Color)
 
 	// SetMouseCapture sets the ebiten image area where mouse events are captured.
 	// If game is Empty, the entire ebiten game area's mouse events are captured.

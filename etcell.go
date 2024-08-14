@@ -331,6 +331,9 @@ func (et *etcell) Draw(screen *ebiten.Image) {
 		return
 	}
 
+	et.grid_lock.Lock()
+	defer et.grid_lock.Unlock()
+
 	if et.grid_image == nil {
 		return
 	}
