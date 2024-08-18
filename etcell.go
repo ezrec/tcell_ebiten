@@ -788,7 +788,7 @@ func (et *etcell) Show() {
 				et.blink_image.DrawImage(et.cell_image, &opts)
 			} else {
 				// Clear from the blink image
-				opts.ColorScale.ScaleWithColor(color.Transparent)
+				opts.Blend = ebiten.BlendClear
 				et.blink_image.DrawImage(et.cell_image, &opts)
 			}
 
