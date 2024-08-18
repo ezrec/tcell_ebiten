@@ -77,7 +77,6 @@ func NewGameScreen(font_face text.Face) GameScreen {
 		blink_text_ms:   900,
 		blink_cursor_ms: 750,
 		cursor_color:    tcell.ColorWhite,
-		event_channel:   make(chan tcell.Event, 128),
 		rune_fallback:   make(map[rune]string),
 		italic_skew:     -0.108,
 	}
@@ -426,6 +425,8 @@ func (et *etcell) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHe
 
 // Init initializes the screen for use.
 func (et *etcell) Init() (err error) {
+	et.event_channel = make(chan tcell.Event, 128)
+
 	et.Clear()
 
 	return
@@ -433,6 +434,7 @@ func (et *etcell) Init() (err error) {
 
 // Fini finalizes the screen also releasing resources.
 func (et *etcell) Fini() {
+	close(et.event_channel)
 }
 
 // Clear logically erases the screen.
