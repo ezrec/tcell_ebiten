@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/hajimehoshi/bitmapfont/v3 v3.1.0
-	github.com/hajimehoshi/ebiten/v2 v2.7.8
+	github.com/hajimehoshi/ebiten/v2 v2.7.9
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/image v0.20.0
 )
