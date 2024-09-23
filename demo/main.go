@@ -101,6 +101,9 @@ func main() {
 	ebiten.SetWindowTitle("tcell_ebiten demo")
 	ebiten.SetWindowResizable(true)
 
+	dg.game_screen.Init()
+	defer dg.game_screen.Fini()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	go dg.text_game.Run(ctx)
 
