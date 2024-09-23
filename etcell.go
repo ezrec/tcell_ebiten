@@ -79,6 +79,7 @@ func NewGameScreen(font_face text.Face) GameScreen {
 		cursor_color:    tcell.ColorWhite,
 		rune_fallback:   make(map[rune]string),
 		italic_skew:     -0.108,
+		mouse_flags:     tcell.MouseButtonEvents,
 	}
 
 	// Make the layout grid based on the width and height (in pixels) given,
@@ -234,6 +235,10 @@ func (et *etcell) Update() (err error) {
 			mouse_capture = et.grid_image.Bounds()
 		}
 
+		if mouse_capture.Dx() == 0 || mouse_capture.Dy() == 0 {
+			return
+		}
+
 		mouse := cursor.Sub(et.mouse_capture.Min)
 		if !et.focused {
 			et.PostEvent(tcell.NewEventFocus(true))
@@ -247,12 +252,12 @@ func (et *etcell) Update() (err error) {
 			}
 		}
 
+		// Translate from absolute mouse position to cell position.
 		mouse_x := mouse.X
 		mouse_y := mouse.Y
-		if !et.mouse_capture.Empty() {
-			mouse_x = (mouse_x * mouse_mapping.Dx() / et.mouse_capture.Dx())
-			mouse_y = (mouse_y * mouse_mapping.Dy() / et.mouse_capture.Dy())
-		}
+
+		mouse_x = (mouse_x * mouse_mapping.Dx() / mouse_capture.Dx())
+		mouse_y = (mouse_y * mouse_mapping.Dy() / mouse_capture.Dy())
 		mouse_x += et.mouse_mapping.Min.X
 		mouse_y += et.mouse_mapping.Min.Y
 
