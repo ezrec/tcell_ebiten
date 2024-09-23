@@ -77,8 +77,6 @@ func (tg *TextGame) redraw() {
 }
 
 func (tg *TextGame) Run(ctx context.Context) {
-	tg.EnableMouse(tcell.MouseMotionEvents)
-
 	for ctx.Err() == nil {
 		event := tg.PollEvent()
 		switch ev := event.(type) {

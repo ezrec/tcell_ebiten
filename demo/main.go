@@ -15,6 +15,7 @@ import (
 )
 
 type DemoGame struct {
+	game_screen tcell_ebiten.GameScreen
 	text_game   *TextGame
 	text_bounds image.Rectangle
 	text_image  *ebiten.Image
@@ -26,8 +27,9 @@ type DemoGame struct {
 func NewDemoGame() (dg *DemoGame) {
 	gs := tcell_ebiten.NewGameScreen(text.NewGoXFace(bitmapfont.Face))
 	dg = &DemoGame{
-		text_game: NewTextGame(gs),
-		draw_game: &DrawGame{},
+		game_screen: gs,
+		text_game:   NewTextGame(gs),
+		draw_game:   &DrawGame{},
 	}
 
 	return
