@@ -42,6 +42,8 @@ func main() {
 |
 |  // Create a proxy between the ebiten and tcell engines.
 |  gs := tcell_ebiten.NewGameScreen(font_face)
+|  gs.Init()
+|  defer gs.Fini()
 |
 |  go ebiten.RunGame(gs)
 
