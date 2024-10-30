@@ -107,7 +107,10 @@ func main() {
 	defer dg.game_screen.Fini()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go dg.text_game.Run(ctx)
+	go func() {
+		dg.text_game.Run(ctx)
+		dg.game_screen.Close()
+	}()
 
 	err := ebiten.RunGame(dg)
 	cancel()
