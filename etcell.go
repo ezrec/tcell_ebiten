@@ -224,6 +224,7 @@ func (et *etcell) Update() (err error) {
 	var in_focus bool
 	var posted bool
 
+	// Mouse buttons
 	if et.mouse_capture.Empty() || cursor.In(et.mouse_capture) {
 		mouse_mapping := et.mouse_mapping
 		if mouse_mapping.Empty() {
@@ -260,6 +261,21 @@ func (et *etcell) Update() (err error) {
 		mouse_y = (mouse_y * mouse_mapping.Dy() / mouse_capture.Dy())
 		mouse_x += et.mouse_mapping.Min.X
 		mouse_y += et.mouse_mapping.Min.Y
+
+		// Mouse wheel movement.
+		xoff, yoff := ebiten.Wheel()
+		if xoff < 0 {
+			buttons |= tcell.WheelLeft
+		}
+		if xoff > 0 {
+			buttons |= tcell.WheelRight
+		}
+		if yoff < 0 {
+			buttons |= tcell.WheelDown
+		}
+		if yoff > 0 {
+			buttons |= tcell.WheelUp
+		}
 
 		et.PostEvent(tcell.NewEventMouse(mouse_x, mouse_y, buttons, modMask()))
 
