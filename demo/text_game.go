@@ -77,9 +77,24 @@ func (tg *TextGame) redraw() {
 }
 
 func (tg *TextGame) Run(ctx context.Context) {
+	do_rune := func(r rune) {
+		v, ok := tg.seen_rune[r]
+		if !ok {
+			tg.seen_rune[r] = 0
+		} else {
+			v++
+			tg.seen_rune[r] = v
+		}
+		tg.draw_rune(r, v)
+	}
+
 	for ctx.Err() == nil {
 		event := tg.PollEvent()
 		switch ev := event.(type) {
+		case *tcell.EventPaste:
+			// tcell.EventPaste is not supported. Manually catch the
+			// mouse or control key for pasting, and use a library such
+			// as golang.design/x/clipboard to read the system clipboard.
 		case *tcell.EventFocus:
 			if ev.Focused {
 				tg.SetCursorStyle(tcell.CursorStyleBlinkingBar)
@@ -89,6 +104,33 @@ func (tg *TextGame) Run(ctx context.Context) {
 		case *tcell.EventMouse:
 			x, y := ev.Position()
 			tg.ShowCursor(x, y)
+			switch ev.Buttons() {
+			case tcell.ButtonPrimary:
+				do_rune(0x80)
+			case tcell.ButtonMiddle:
+				do_rune(0x81)
+			case tcell.ButtonSecondary:
+				do_rune(0x82)
+			case tcell.Button4:
+				do_rune(0x83)
+			case tcell.Button5:
+				do_rune(0x84)
+			case tcell.Button6:
+				do_rune(0x85)
+			case tcell.Button7:
+				do_rune(0x86)
+			case tcell.Button8:
+				do_rune(0x87)
+			case tcell.WheelUp:
+				do_rune(0x88)
+			case tcell.WheelDown:
+				do_rune(0x89)
+			case tcell.WheelLeft:
+				do_rune(0x8a)
+			case tcell.WheelRight:
+				do_rune(0x8b)
+			}
+			tg.Show()
 		case *tcell.EventResize:
 			tg.redraw()
 			tg.Sync()
@@ -107,14 +149,7 @@ func (tg *TextGame) Run(ctx context.Context) {
 			tg.draw_key(key, v)
 			if key == tcell.KeyRune {
 				r := ev.Rune()
-				v, ok := tg.seen_rune[r]
-				if !ok {
-					tg.seen_rune[r] = 0
-				} else {
-					v++
-					tg.seen_rune[r] = v
-				}
-				tg.draw_rune(r, v)
+				do_rune(r)
 			}
 			tg.Show()
 		}
