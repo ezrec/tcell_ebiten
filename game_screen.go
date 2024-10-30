@@ -18,6 +18,9 @@ type GameScreen interface {
 	tcell.Screen
 	ebiten.Game
 
+	// Close will cause ebiten.Run() to exit on the next Update()
+	Close() error
+
 	// Set the color of the text 'hardware' cursor.
 	SetCursorColor(color tcell.Color)
 

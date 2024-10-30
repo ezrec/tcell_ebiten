@@ -45,13 +45,15 @@ func main() {
 |  gs.Init()
 |  defer gs.Fini()
 |
-|  go ebiten.RunGame(gs)
-
-   app.SetScreen(gs)
-
-   if e := app.Run(); e != nil {
-        fmt.Fprintln(os.Stderr, e.Error())
-        os.Exit(1)
-    }
+|  go func () {
+|      app.SetScreen(gs)
+       e := app.Run()
+|      gs.Close()
+       if e != nil {
+          fmt.Fprintln(os.Stderr, e.Error())
+          os.Exit(1)
+       }
+|  }
+|  ebiten.RunGame(gs)
 }
 ```

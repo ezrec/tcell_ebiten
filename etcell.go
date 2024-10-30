@@ -65,6 +65,7 @@ type etcell struct {
 	rune_fallback map[rune]string
 
 	suspended bool // Input/output is suspended.
+	closed    bool // Closed by Close()
 }
 
 // NewGameScreen creates a new GameScreen, suitable for both ebiten and tcell.
@@ -94,6 +95,16 @@ func NewGameScreen(font_face text.Face) GameScreen {
 	et.cell_image.Fill(color.White)
 
 	return et
+}
+
+// Close() requests that the wrapping ebiten.Run() exit after the next Update()
+func (et *etcell) Close() error {
+	et.grid_lock.Lock()
+	defer et.grid_lock.Unlock()
+
+	et.closed = true
+
+	return nil
 }
 
 // SetMouseCapture sets the ebiten screen region to capture mouse events in.
@@ -214,6 +225,14 @@ func isKeyJustPressedOrRepeating(key ebiten.Key) bool {
 // Update processes ebiten.Game events.
 // If Screen.Suspend() has been called, does nothing.
 func (et *etcell) Update() (err error) {
+	et.grid_lock.Lock()
+	defer et.grid_lock.Unlock()
+
+	if et.closed {
+		err = ebiten.Termination
+		return
+	}
+
 	if et.suspended {
 		return
 	}
@@ -347,12 +366,12 @@ func (et *etcell) Update() (err error) {
 // Draw in ebiten.Game context.
 // If Screen.Suspend() has been called, does nothing.
 func (et *etcell) Draw(screen *ebiten.Image) {
+	et.grid_lock.Lock()
+	defer et.grid_lock.Unlock()
+
 	if et.suspended {
 		return
 	}
-
-	et.grid_lock.Lock()
-	defer et.grid_lock.Unlock()
 
 	if et.grid_image == nil {
 		return
@@ -979,12 +998,18 @@ func (et *etcell) HasKey(key tcell.Key) (has bool) {
 // terminal settings to what they were when the application started.
 // This can be used to, for example, run a sub-shell.
 func (et *etcell) Suspend() (err error) {
+	et.grid_lock.Lock()
+	defer et.grid_lock.Unlock()
+
 	et.suspended = true
 	return
 }
 
 // Resume resumes after Suspend().
 func (et *etcell) Resume() (err error) {
+	et.grid_lock.Lock()
+	defer et.grid_lock.Unlock()
+
 	et.suspended = false
 	return
 }

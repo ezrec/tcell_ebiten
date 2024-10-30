@@ -139,6 +139,9 @@ func (tg *TextGame) Run(ctx context.Context) {
 			tg.Sync()
 		case *tcell.EventKey:
 			key := ev.Key()
+			if key == tcell.KeyEnd {
+				return
+			}
 			v, ok := tg.seen_key[key]
 			if !ok {
 				tg.seen_key[key] = 0
