@@ -50,7 +50,7 @@ func (tg *TextGame) draw_key(k tcell.Key, v int) {
 
 	color := tcell.ColorBlack + tcell.Color(v%color_span)
 	style := tcell.StyleDefault.Background(color)
-	tg.SetContent(x, y, 'x', nil, style)
+	tg.SetContent(1+x, 1+y, 'x', nil, style)
 }
 
 func (tg *TextGame) draw_rune(r rune, v int) {
@@ -59,7 +59,7 @@ func (tg *TextGame) draw_rune(r rune, v int) {
 
 	color := tcell.ColorBlack + tcell.Color(v%color_span)
 	style := tcell.StyleDefault.Background(color)
-	tg.SetContent(x, y, r, nil, style)
+	tg.SetContent(1+x, 1+y, r, nil, style)
 }
 
 func (tg *TextGame) redraw() {
@@ -73,6 +73,26 @@ func (tg *TextGame) redraw() {
 		tg.draw_rune(r, v)
 	}
 
+	// Draw border
+	max_x, max_y := tg.Size()
+
+	style := tcell.StyleDefault.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
+	for x := 1; x < (max_x - 1); x++ {
+		for _, y := range []int{0, max_y - 1} {
+			tg.SetContent(x, y, '─', nil, style)
+		}
+	}
+	for y := 1; y < (max_y - 1); y++ {
+		for _, x := range []int{0, max_x - 1} {
+			tg.SetContent(x, y, '│', nil, style)
+		}
+	}
+	tg.SetContent(0, 0, '╭', nil, style)
+	tg.SetContent(max_x-1, 0, '╮', nil, style)
+	tg.SetContent(0, max_y-1, '╰', nil, style)
+	tg.SetContent(max_x-1, max_y-1, '╯', nil, style)
+
+	// Show
 	tg.Show()
 }
 
