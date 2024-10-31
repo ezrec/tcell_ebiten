@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	typesetting_font "github.com/go-text/typesetting/font"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	image_font "golang.org/x/image/font"
 )
 
 type cell struct {
@@ -834,7 +836,7 @@ func (et *etcell) Show() {
 
 			// Is this a rune that can be displayed?
 			str := string([]rune{cell.Rune})
-			if text.Advance(str, et.face) == 0.0 {
+			if !et.CanDisplay(cell.Rune, false) {
 				var ok bool
 				str, ok = et.rune_fallback[cell.Rune]
 				if !ok {
@@ -954,9 +956,18 @@ func (et *etcell) UnregisterRuneFallback(r rune) {
 // also return true if the terminal can replace the glyph with
 // one that is visually indistinguishable from the one requested.
 func (et *etcell) CanDisplay(r rune, checkFallbacks bool) (can bool) {
-	str := string([]rune{r})
-
-	can = text.Advance(str, et.face) > 0.0
+	// Ugly, since text.Face does not export hasGlyph().
+	switch ebiten_face := et.face.(type) {
+	case (*text.GoXFace):
+		face := ebiten_face.UnsafeInternal().(image_font.Face)
+		_, can = face.GlyphAdvance(r)
+	case (*text.GoTextFace):
+		face := ebiten_face.Source.UnsafeInternal().(*typesetting_font.Face)
+		_, can = face.NominalGlyph(r)
+	default:
+		// Some future internal ebiten/v2/text/v2 font face type.
+		can = text.Advance(string([]rune{r}), et.face) > 0.0
+	}
 
 	if !can && checkFallbacks {
 		_, can = et.rune_fallback[r]
