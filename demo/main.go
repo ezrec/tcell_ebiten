@@ -3,15 +3,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"image"
 	"log"
 
 	"github.com/ezrec/tcell_ebiten"
 
-	"github.com/hajimehoshi/bitmapfont/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"golang.org/x/image/font/gofont/gomono"
 )
 
 type DemoGame struct {
@@ -25,12 +26,27 @@ type DemoGame struct {
 }
 
 func NewDemoGame() (dg *DemoGame) {
-	gs := tcell_ebiten.NewGameScreen(text.NewGoXFace(bitmapfont.Face))
+	source, err := text.NewGoTextFaceSource(bytes.NewReader(gomono.TTF))
+	if err != nil {
+		panic(err)
+	}
+
+	font_face := &text.GoTextFace{
+		Source: source,
+		Size:   16,
+	}
+
+	gs := tcell_ebiten.NewGameScreen(font_face)
 	dg = &DemoGame{
 		game_screen: gs,
 		text_game:   NewTextGame(gs),
 		draw_game:   &DrawGame{},
 	}
+
+	gs.RegisterRuneFallback('╭', "┌")
+	gs.RegisterRuneFallback('╯', "┘")
+	gs.RegisterRuneFallback('╮', "┐")
+	gs.RegisterRuneFallback('╰', "└")
 
 	return
 }
