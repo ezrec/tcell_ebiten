@@ -119,6 +119,11 @@ func TestNewScreen(t *testing.T) {
 	game, ok := gs.(ebiten.Game)
 	assert.True(ok)
 
+	gs.RegisterRuneFallback(rune(0), " ")
+	gs.SetContent(0, 0, rune(0), nil, tcell.StyleDefault)
+	assert.False(gs.CanDisplay(rune(0), false))
+	assert.True(gs.CanDisplay(rune(0), true))
+
 	swidth, sheight := game.Layout(cell_size.X*20+1, cell_size.Y*30+2)
 	assert.Equal(cell_size.X*20, swidth)
 	assert.Equal(cell_size.Y*30, sheight)
