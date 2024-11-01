@@ -18,10 +18,16 @@ type GameScreen interface {
 	tcell.Screen
 	ebiten.Game
 
+	// LayoutF supports High-DPI monitor situations.
+	LayoutF(width, height float64) (screen_width, screen_height float64)
+
 	// Close will cause ebiten.Run() to exit on the next Update()
 	Close() error
 
-	// Set the color of the text 'hardware' cursor.
+	// SetHighDPI enables high-DPI mode (disable Ebiten automatic upscaling)
+	SetHighDPI(enable bool)
+
+	// SetCursorColor changes the color of the text 'hardware' cursor.
 	SetCursorColor(color tcell.Color)
 
 	// SetMouseCapture sets the ebiten image area where mouse events are captured.

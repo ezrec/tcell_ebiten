@@ -65,6 +65,7 @@ type etcell struct {
 
 	rune_fallback map[rune]string
 
+	highdpi   bool // High DPI mode.
 	suspended bool // Input/output is suspended.
 	closed    bool // Closed by Close()
 }
@@ -106,6 +107,12 @@ func (et *etcell) Close() error {
 	et.closed = true
 
 	return nil
+}
+
+// SetHighDPI enables High DPI mode, which disabled the automatic
+// upscaling the Ebiten engine normally provides.
+func (et *etcell) SetHighDPI(enable bool) {
+	et.highdpi = enable
 }
 
 // SetMouseCapture sets the ebiten screen region to capture mouse events in.
@@ -438,6 +445,19 @@ func (et *etcell) Draw(screen *ebiten.Image) {
 		opts.GeoM.Translate(float64(pos.X), float64(pos.Y))
 		screen.DrawImage(et.cell_image, &opts)
 	}
+}
+
+func (et *etcell) LayoutF(outsideWidth, outsideHeight float64) (screenWidth, screenHeight float64) {
+	scale := float64(1.0)
+	if et.highdpi {
+		scale = ebiten.Monitor().DeviceScaleFactor()
+	}
+	ow := int(math.Ceil(float64(outsideWidth) * scale))
+	oh := int(math.Ceil(float64(outsideHeight) * scale))
+	sw, sh := et.Layout(ow, oh)
+	screenWidth = float64(sw)
+	screenHeight = float64(sh)
+	return
 }
 
 func (et *etcell) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
