@@ -14,7 +14,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	image_font "golang.org/x/image/font"
 )
 
 type cell struct {
@@ -311,7 +310,8 @@ func (et *etcell) Update() (err error) {
 		}
 		mods := modMask()
 		if (mods & tcell.ModCtrl) != 0 {
-			for _, e_key := range inpututil.PressedKeys() {
+			keys := make([]ebiten.Key, 0, 16)
+			for _, e_key := range inpututil.AppendPressedKeys(keys) {
 				if !isKeyJustPressedOrRepeating(e_key) {
 					continue
 				}
@@ -625,7 +625,7 @@ func (et *etcell) ChannelEvents(ch chan<- tcell.Event, quit <-chan struct{}) {
 			select {
 			case ev := <-et.event_channel:
 				ch <- ev
-			case _ = <-quit:
+			case <-quit:
 				close(ch)
 				return
 			}
@@ -959,7 +959,7 @@ func (et *etcell) CanDisplay(r rune, checkFallbacks bool) (can bool) {
 	// Ugly, since text.Face does not export hasGlyph().
 	switch ebiten_face := et.face.(type) {
 	case (*text.GoXFace):
-		face := ebiten_face.UnsafeInternal().(image_font.Face)
+		face := ebiten_face.UnsafeInternal()
 		_, can = face.GlyphAdvance(r)
 	case (*text.GoTextFace):
 		face := ebiten_face.Source.UnsafeInternal().(*typesetting_font.Face)

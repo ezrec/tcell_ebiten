@@ -14,7 +14,6 @@ import (
 )
 
 type DrawGame struct {
-	size     image.Point
 	cursor   image.Point
 	vertices []image.Point
 
