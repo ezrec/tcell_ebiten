@@ -43,6 +43,8 @@ func NewDemoGame() (dg *DemoGame) {
 		draw_game:   &DrawGame{},
 	}
 
+	gs.SetHighDPI(true)
+
 	gs.RegisterRuneFallback('╭', "┌")
 	gs.RegisterRuneFallback('╯', "┘")
 	gs.RegisterRuneFallback('╮', "┐")
@@ -100,12 +102,9 @@ func (dg *DemoGame) Layout(x, y int) (int, int) {
 
 	size_x, size_y := dg.text_bounds.Dx(), dg.text_bounds.Dy()
 	scale := 2
-	text_x, text_y := dg.text_game.Layout(size_x/scale, size_y/scale)
-	dg.text_image = ebiten.NewImage(text_x, text_y)
-	// Adjust offset
-	offset_x := (size_x - text_x*scale) / 2
-	offset_y := (size_y - text_y*scale) / 2
-	dg.text_bounds = dg.text_bounds.Add(image.Point{X: offset_x, Y: offset_y})
+	text_x, text_y := dg.text_game.LayoutF(float64(size_x)/float64(scale), float64(size_y)/float64(scale))
+	dg.text_image = ebiten.NewImage(int(text_x), int(text_y))
+
 	dg.text_game.SetInputCapture(dg.text_bounds, image.Rectangle{})
 
 	return x, y
