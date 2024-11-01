@@ -105,7 +105,7 @@ func (dg *DemoGame) Layout(x, y int) (int, int) {
 	// Adjust offset
 	offset_x := (size_x - text_x*scale) / 2
 	offset_y := (size_y - text_y*scale) / 2
-	dg.text_bounds.Add(image.Point{X: offset_x, Y: offset_y})
+	dg.text_bounds = dg.text_bounds.Add(image.Point{X: offset_x, Y: offset_y})
 	dg.text_game.SetInputCapture(dg.text_bounds, image.Rectangle{})
 
 	return x, y
@@ -117,7 +117,7 @@ func main() {
 
 	ebiten.SetWindowSize(800, 600)
 	ebiten.SetWindowTitle("tcell_ebiten demo")
-	ebiten.SetWindowResizable(true)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	dg.game_screen.Init()
 	defer dg.game_screen.Fini()
