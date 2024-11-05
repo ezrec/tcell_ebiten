@@ -3,29 +3,21 @@
 package main
 
 import (
-	"context"
-
 	"github.com/gdamore/tcell/v2"
-
-	"github.com/ezrec/tcell_ebiten"
 )
 
 type TextGame struct {
-	tcell_ebiten.GameScreen
+	tcell.Screen
 	seen_key  map[tcell.Key]int
 	seen_rune map[rune]int
 }
 
-func NewTextGame(screen tcell_ebiten.GameScreen) (tg *TextGame) {
+func NewTextGame(screen tcell.Screen) (tg *TextGame) {
 	tg = &TextGame{
-		GameScreen: screen,
-		seen_key:   map[tcell.Key]int{},
-		seen_rune:  map[rune]int{},
+		Screen:    screen,
+		seen_key:  map[tcell.Key]int{},
+		seen_rune: map[rune]int{},
 	}
-
-	tg.SetStyle(tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorBlack))
-
-	tg.SetCursorColor(tcell.ColorRed)
 
 	return
 }
@@ -96,7 +88,7 @@ func (tg *TextGame) redraw() {
 	tg.Show()
 }
 
-func (tg *TextGame) Run(ctx context.Context) {
+func (tg *TextGame) Run() error {
 	do_rune := func(r rune) {
 		v, ok := tg.seen_rune[r]
 		if !ok {
@@ -108,7 +100,7 @@ func (tg *TextGame) Run(ctx context.Context) {
 		tg.draw_rune(r, v)
 	}
 
-	for ctx.Err() == nil {
+	for {
 		event := tg.PollEvent()
 		switch ev := event.(type) {
 		case *tcell.EventPaste:
@@ -160,7 +152,7 @@ func (tg *TextGame) Run(ctx context.Context) {
 		case *tcell.EventKey:
 			key := ev.Key()
 			if key == tcell.KeyEnd {
-				return
+				return nil
 			}
 			v, ok := tg.seen_key[key]
 			if !ok {

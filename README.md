@@ -15,9 +15,7 @@ In your `tcell` program, add the following imports:
 ```
 import (
     "github.com/ezrec/tcell_ebiten"
-    "github.com/hajimehoshi/bitmapfont/v3"
     "github.com/hajimehoshi/ebiten/v2"
-    "github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 |  // Define a nominal window size.
@@ -34,26 +32,21 @@ func main() {
 |  ebiten.SetWindowTitle("hbox demo")
 |  ebiten.SetWindowResizeable(true)
 |
-|  // Select an ebiten/v2/text/v2 font to use. The letter 'O'
-|  // from the font face is used to determine the nominal font cell.
-|
-|  var font_face text.Face
-|  font_face = text.NewGoXFace(bitmapfont.Face)
+|  // Select an ebiten/v2/text/v2 font to use.
+|  bm_face := text.NewGoXFace(bitmapfont.Face)
+|  font_face, _ := font.NewMonoFont(bm_face)
 |
 |  // Create a proxy between the ebiten and tcell engines.
-|  gs := tcell_ebiten.NewGameScreen(font_face)
-|  gs.Init()
-|  defer gs.Fini()
+|  et := &etcell.ETCell{}
+|  et.SetFont(font)
 |
-|  go func () {
-|      app.SetScreen(gs)
-       e := app.Run()
-|      gs.Close()
-       if e != nil {
-          fmt.Fprintln(os.Stderr, e.Error())
-          os.Exit(1)
-       }
-|  }
-|  ebiten.RunGame(gs)
+|  err := et.Run(func (screen tcell.Screen) error {
+|      app.SetScreen(screen)
+       err := app.Run()
+       return err;
+|  })
+   if err != nil {
+       panic(err)
+   }
 }
 ```
