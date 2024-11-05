@@ -4,25 +4,27 @@ package main
 
 import (
 	"bytes"
-	"context"
-	"image"
 	"log"
 
 	"github.com/ezrec/tcell_ebiten"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"golang.org/x/image/font/gofont/gomono"
 )
 
 type DemoGame struct {
-	game_screen tcell_ebiten.GameScreen
-	text_game   *TextGame
-	text_bounds image.Rectangle
-	text_image  *ebiten.Image
-	draw_game   *DrawGame
-	draw_bounds image.Rectangle
-	draw_image  *ebiten.Image
+	text_run    interface{ Run() error }
+	game_screen *tcell_ebiten.ETCell
+	text_game   interface {
+		ebiten.Game
+		LayoutF(x, y float64) (sx, sy float64)
+	}
+	draw_game interface {
+		ebiten.Game
+		LayoutF(x, y float64) (sx, sy float64)
+	}
 }
 
 func NewDemoGame() (dg *DemoGame) {
@@ -36,42 +38,30 @@ func NewDemoGame() (dg *DemoGame) {
 		Size:   16,
 	}
 
-	gs := tcell_ebiten.NewGameScreen(font_face)
+	gs := &tcell_ebiten.ETCell{}
+	gs.SetFont(font_face)
+
+	screen := gs.Screen()
+	screen.RegisterRuneFallback('╭', "┌")
+	screen.RegisterRuneFallback('╯', "┘")
+	screen.RegisterRuneFallback('╮', "┐")
+	screen.RegisterRuneFallback('╰', "└")
+
 	dg = &DemoGame{
+		text_run:    NewTextGame(screen),
 		game_screen: gs,
-		text_game:   NewTextGame(gs),
+		text_game:   gs.Game(),
 		draw_game:   &DrawGame{},
 	}
-
-	gs.SetHighDPI(true)
-
-	gs.RegisterRuneFallback('╭', "┌")
-	gs.RegisterRuneFallback('╯', "┘")
-	gs.RegisterRuneFallback('╮', "┐")
-	gs.RegisterRuneFallback('╰', "└")
 
 	return
 }
 
 func (dg *DemoGame) Draw(screen *ebiten.Image) {
-	table := []struct {
-		game   ebiten.Game
-		bounds image.Rectangle
-		image  *ebiten.Image
-	}{
-		{dg.text_game, dg.text_bounds, dg.text_image},
-		{dg.draw_game, dg.draw_bounds, dg.draw_image},
-	}
-
-	for _, entry := range table {
-		entry.game.Draw(entry.image)
-		ops := &ebiten.DrawImageOptions{}
-		scale_x := float64(entry.bounds.Dx()) / float64(entry.image.Bounds().Dx())
-		scale_y := float64(entry.bounds.Dy()) / float64(entry.image.Bounds().Dy())
-		ops.GeoM.Scale(scale_x, scale_y)
-		ops.GeoM.Translate(float64(entry.bounds.Min.X), float64(entry.bounds.Min.Y))
-		screen.DrawImage(entry.image, ops)
-	}
+	// Draw game first (background)
+	dg.draw_game.Draw(screen)
+	// Overlay with text (foreground)
+	dg.text_game.Draw(screen)
 }
 
 func (dg *DemoGame) Update() (err error) {
@@ -88,26 +78,12 @@ func (dg *DemoGame) Update() (err error) {
 	return
 }
 
-func (dg *DemoGame) Layout(x, y int) (int, int) {
-	y_split := y / 2
+func (dg *DemoGame) LayoutF(x, y float64) (float64, float64) {
+	ox, oy := dg.text_game.LayoutF(x, y)
 
-	dg.draw_bounds = image.Rect(0, y_split, x, y)
+	dg.draw_game.LayoutF(ox, oy)
 
-	// Drawing layout
-	draw_x, draw_y := dg.draw_game.Layout(dg.draw_bounds.Dx(), dg.draw_bounds.Dy())
-	dg.draw_image = ebiten.NewImage(draw_x, draw_y)
-	dg.draw_game.SetInputCapture(dg.draw_bounds)
-
-	dg.text_bounds = image.Rect(0, 0, x, y_split)
-
-	size_x, size_y := dg.text_bounds.Dx(), dg.text_bounds.Dy()
-	scale := 2
-	text_x, text_y := dg.text_game.LayoutF(float64(size_x)/float64(scale), float64(size_y)/float64(scale))
-	dg.text_image = ebiten.NewImage(int(text_x), int(text_y))
-
-	dg.text_game.SetInputCapture(dg.text_bounds, image.Rectangle{})
-
-	return x, y
+	return ox, oy
 }
 
 func main() {
@@ -118,17 +94,12 @@ func main() {
 	ebiten.SetWindowTitle("tcell_ebiten demo")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
-	dg.game_screen.Init()
-	defer dg.game_screen.Fini()
+	err := dg.game_screen.Run(func(screen tcell.Screen) error {
+		screen.Init()
+		defer screen.Fini()
+		return dg.text_run.Run()
+	})
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		dg.text_game.Run(ctx)
-		dg.game_screen.Close()
-	}()
-
-	err := ebiten.RunGame(dg)
-	cancel()
 	if err != nil {
 		log.Fatal(err)
 	}

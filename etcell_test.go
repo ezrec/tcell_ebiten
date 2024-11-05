@@ -14,7 +14,6 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
@@ -97,32 +96,31 @@ func (mf *mockFace) Metrics() font.Metrics {
 	return mf.metrics
 }
 
-////// NewScreen() unit tests
+////// ETCell() unit tests
 
-func TestNewScreen(t *testing.T) {
+func TestETCell(t *testing.T) {
 	assert := assert.New(t)
 
 	cell_size := image.Point{X: 11, Y: 22}
 
 	face := text.NewGoXFace(&mockFace{CellSize: cell_size})
 
-	gs := NewGameScreen(face)
+	gs := &ETCell{}
+	gs.SetFont(face)
 
 	assert.NotNil(gs)
 
-	screen, ok := gs.(tcell.Screen)
-	assert.True(ok)
+	screen := gs.Screen()
 
 	screen.Init()
 	defer screen.Fini()
 
-	game, ok := gs.(ebiten.Game)
-	assert.True(ok)
+	game := gs.Game()
 
-	gs.RegisterRuneFallback(rune(0), " ")
-	gs.SetContent(0, 0, rune(0), nil, tcell.StyleDefault)
-	assert.False(gs.CanDisplay(rune(0), false))
-	assert.True(gs.CanDisplay(rune(0), true))
+	screen.RegisterRuneFallback(rune(0), " ")
+	screen.SetContent(0, 0, rune(0), nil, tcell.StyleDefault)
+	assert.False(screen.CanDisplay(rune(0), false))
+	assert.True(screen.CanDisplay(rune(0), true))
 
 	swidth, sheight := game.Layout(cell_size.X*20+1, cell_size.Y*30+2)
 	assert.Equal(cell_size.X*20, swidth)

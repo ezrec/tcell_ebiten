@@ -16,20 +16,16 @@ import (
 type DrawGame struct {
 	cursor   image.Point
 	vertices []image.Point
-
-	mouse_capture image.Rectangle
 }
 
 func (dg *DrawGame) Update() (err error) {
 	x, y := ebiten.CursorPosition()
 	cursor := image.Point{X: x, Y: y}
 
-	if dg.mouse_capture.Empty() || cursor.In(dg.mouse_capture) {
-		dg.cursor = cursor.Sub(dg.mouse_capture.Min)
+	dg.cursor = cursor
 
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			dg.vertices = append(dg.vertices, dg.cursor)
-		}
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		dg.vertices = append(dg.vertices, dg.cursor)
 	}
 
 	return
@@ -57,10 +53,10 @@ func (dg *DrawGame) Draw(screen *ebiten.Image) {
 	draw.Draw(screen, box, cursor, image.Point{}, draw.Src)
 }
 
-func (dg *DrawGame) Layout(x, y int) (int, int) {
-	return x, y
+func (dg *DrawGame) LayoutF(ox, oy float64) (sx, sy float64) {
+	return ox, oy
 }
 
-func (dg *DrawGame) SetInputCapture(rect image.Rectangle) {
-	dg.mouse_capture = rect
+func (dg *DrawGame) Layout(ox, oy int) (sx, sy int) {
+	return ox, oy
 }
