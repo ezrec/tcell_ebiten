@@ -5,12 +5,11 @@ package tcell_ebiten
 import (
 	"image"
 	"image/color"
-	"math"
+
+	"github.com/ezrec/tcell_ebiten/font"
 
 	"github.com/gdamore/tcell/v2"
-	typesetting_font "github.com/go-text/typesetting/font"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 type etcellScreen struct {
@@ -385,19 +384,28 @@ func (et *etcellScreen) Show() {
 			}
 
 			// Draw the first rune
-			text_opts := text.DrawOptions{}
+			text_opts := ebiten.DrawImageOptions{}
 			text_opts.ColorScale.ScaleWithColor(fg_color)
-			if (attr & tcell.AttrItalic) != 0 {
-				text_opts.GeoM.Skew(et.italic_skew, 0.0)
-				text_opts.GeoM.Translate(-float64(et.cell_size.X)*math.Sin(et.italic_skew), 0)
-			}
 			text_opts.GeoM.Translate(float64(pt.X), float64(pt.Y))
 
-			text.Draw(dst, str, et.face, &text_opts)
+			font_style := font.FontStyleNormal
+			if (attr & (tcell.AttrItalic | tcell.AttrBold)) == (tcell.AttrItalic | tcell.AttrBold) {
+				font_style = font.FontStyleBoldItalic
+			} else if (attr & tcell.AttrItalic) != 0 {
+				font_style = font.FontStyleItalic
+			} else if (attr & tcell.AttrBold) != 0 {
+				font_style = font.FontStyleBold
+			}
+
+			for _, char := range str {
+				glyph, _ := et.face.Glyph(char, font_style)
+				dst.DrawImage(glyph, &text_opts)
+			}
 
 			// Draw the combining runes
-			if len(cell.Combining) > 0 {
-				text.Draw(dst, string(cell.Combining), et.face, &text_opts)
+			for _, char := range cell.Combining {
+				glyph, _ := et.face.Glyph(char, font_style)
+				dst.DrawImage(glyph, &text_opts)
 			}
 
 			// Draw underline, if needed.
@@ -502,18 +510,9 @@ func (et *etcellScreen) UnregisterRuneFallback(r rune) {
 // also return true if the terminal can replace the glyph with
 // one that is visually indistinguishable from the one requested.
 func (et *etcellScreen) CanDisplay(r rune, checkFallbacks bool) (can bool) {
-	// Ugly, since text.Face does not export hasGlyph().
-	switch ebiten_face := et.face.(type) {
-	case (*text.GoXFace):
-		face := ebiten_face.UnsafeInternal()
-		_, can = face.GlyphAdvance(r)
-	case (*text.GoTextFace):
-		face := ebiten_face.Source.UnsafeInternal().(*typesetting_font.Face)
-		_, can = face.NominalGlyph(r)
-	default:
-		// Some future internal ebiten/v2/text/v2 font face type.
-		can = text.Advance(string([]rune{r}), et.face) > 0.0
-	}
+	_, is_empty := et.face.Glyph(r, font.FontStyleNormal)
+
+	can = !is_empty
 
 	if !can && checkFallbacks {
 		_, can = et.rune_fallback[r]

@@ -3,14 +3,13 @@
 package main
 
 import (
-	"bytes"
 	"log"
 
 	"github.com/ezrec/tcell_ebiten"
+	"github.com/ezrec/tcell_ebiten/font"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"golang.org/x/image/font/gofont/gomono"
 )
 
@@ -28,14 +27,9 @@ type DemoGame struct {
 }
 
 func NewDemoGame() (dg *DemoGame) {
-	source, err := text.NewGoTextFaceSource(bytes.NewReader(gomono.TTF))
+	font_face, err := font.NewMonoFontFromTTF(gomono.TTF, 16)
 	if err != nil {
 		panic(err)
-	}
-
-	font_face := &text.GoTextFace{
-		Source: source,
-		Size:   16,
 	}
 
 	gs := &tcell_ebiten.ETCell{}

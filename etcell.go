@@ -9,9 +9,9 @@ import (
 	"image/color"
 	"sync"
 
+	"github.com/ezrec/tcell_ebiten/font"
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 type cell struct {
@@ -50,7 +50,7 @@ type ETCell struct {
 	fixed_layout image.Point
 	fixed_size   image.Point
 
-	face      text.Face   // Font face used for this screen.
+	face      font.Face   // Font face used for this screen.
 	grid_size image.Point // Size of the grid, in cells.
 	cell_size image.Point // Size of a single cell, in pixels.
 
@@ -148,7 +148,7 @@ func (et *ETCell) SetGameDrawOffset(x int, y int) *ETCell { return et }
 func (et *ETCell) SetGameDrawScaling(x, y float64) *ETCell { return et }
 
 // SetFont sets the font for the text cells.
-func (et *ETCell) SetFont(face text.Face) *ETCell {
+func (et *ETCell) SetFont(face font.Face) *ETCell {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -157,18 +157,15 @@ func (et *ETCell) SetFont(face text.Face) *ETCell {
 	return et
 }
 
-func (et *ETCell) setFont(face text.Face) {
+func (et *ETCell) setFont(face font.Face) {
 	// Make the layout grid based on the width and height (in pixels) given,
 	// based on the font metrics. We use the rune 'O' to determine the nominal
 	// bounding box for the character set.
-	const reference_rune = 'O'
-
 	et.face = face
 
-	metrics := et.face.Metrics()
-	width, height := text.Measure(string([]rune{reference_rune}), et.face, metrics.HLineGap)
-	et.cell_size = image.Point{X: int(width), Y: int(height)}
-	et.cell_image = ebiten.NewImage(int(width), int(height))
+	width, height := et.face.Size()
+	et.cell_size = image.Point{X: width, Y: height}
+	et.cell_image = ebiten.NewImage(width, height)
 	et.cell_image.Fill(color.White)
 }
 
