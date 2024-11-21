@@ -212,10 +212,14 @@ func (et *etcellGame) Draw(dst *ebiten.Image) {
 
 		// If now blinking, don't draw the text. We _do_ draw underlines and strikethroughs.
 		if (attr&tcell.AttrBlink) == 0 || !text_blink_phase {
-			dst.DrawImage(cell.glyph, &fg_options)
+			if cell.glyph != nil {
+				dst.DrawImage(cell.glyph, &fg_options)
+			}
 
 			for _, glyph := range cell.combining {
-				dst.DrawImage(glyph, &fg_options)
+				if glyph != nil {
+					dst.DrawImage(glyph, &fg_options)
+				}
 			}
 		}
 
