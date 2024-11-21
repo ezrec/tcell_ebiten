@@ -30,8 +30,8 @@ func (et *etcellScreen) Init() (err error) {
 
 // Fini finalizes the screen also releasing resources.
 func (et *etcellScreen) Fini() {
-    close(et.event_channel)
-    et.event_channel = nil
+	close(et.event_channel)
+	et.event_channel = nil
 }
 
 // Clear logically erases the screen.

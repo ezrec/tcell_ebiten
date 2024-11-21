@@ -242,14 +242,19 @@ func (et *ETCell) Run(runner func(screen tcell.Screen) error) error {
 	go func() {
 		err := runner(et.Screen())
 
-		et.grid_lock.Lock()
-		defer et.grid_lock.Unlock()
-
-		if err == nil {
-			err = ebiten.Termination
-		}
-		et.close_error = err
+		et.Exit(err)
 	}()
 
 	return ebiten.RunGame(et.Game())
+}
+
+// Exit the tcell application.
+func (et *ETCell) Exit(err error) {
+	et.grid_lock.Lock()
+	defer et.grid_lock.Unlock()
+
+	if err == nil {
+		err = ebiten.Termination
+	}
+	et.close_error = err
 }
