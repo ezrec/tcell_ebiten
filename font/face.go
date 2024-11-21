@@ -156,15 +156,15 @@ func NewMonoFont(source any) (mf *MonoFont, err error) {
 	const reference_rune = '█'
 
 	metrics := face.Metrics()
-	height := int(math.Ceil(metrics.HLineGap + metrics.HAscent + metrics.HDescent))
+	height := int(math.Floor(metrics.HLineGap + metrics.HAscent + metrics.HDescent))
 	width_f, _ := ebiten_text.Measure(string([]rune{reference_rune}), face, metrics.HLineGap)
-	width := int(math.Ceil(width_f))
+	width := int(math.Floor(width_f))
 
 	mf = &MonoFont{
 		CacheFont: CacheFont{
 			Width:       width,
 			Height:      height,
-			FontMetrics: face.Metrics(),
+			FontMetrics: metrics,
 		},
 		Face: face,
 	}
@@ -177,13 +177,13 @@ func NewMonoFont(source any) (mf *MonoFont, err error) {
 // - io.Reader (to a TTF source)
 // - []byte (of a TTF blob)
 // - nil (assumes GoMono TTF)
-func NewMonoFontFromTTF(source any, size int) (mf *MonoFont, err error) {
+func NewMonoFontFromTTF(source any, size float64) (mf *MonoFont, err error) {
 	if source == nil {
 		source = gomono.TTF
 	}
 
 	if size == 0 {
-		size = 11
+		size = 11.0
 	}
 
 	var face ebiten_text.Face
@@ -198,7 +198,7 @@ func NewMonoFontFromTTF(source any, size int) (mf *MonoFont, err error) {
 		}
 		face = &ebiten_text.GoTextFace{
 			Source: face_source,
-			Size:   float64(size),
+			Size:   size,
 		}
 	default:
 		err = ErrFontType

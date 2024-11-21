@@ -67,8 +67,8 @@ func TestMonoFont(t *testing.T) {
 	assert.Nil(err)
 
 	w, h := mf.Size()
-	assert.Equal(w, 7)
-	assert.Equal(h, 13)
+	assert.Equal(w, 6)
+	assert.Equal(h, 12)
 
 	for _, style := range []FontStyle{FontStyleNormal, FontStyleBold, FontStyleItalic, FontStyleBoldItalic} {
 		assert.True(mf.HasGlyph(full_block, style))
@@ -79,8 +79,8 @@ func TestMonoFont(t *testing.T) {
 		glyph, is_empty := mf.Glyph(full_block, style)
 		assert.False(is_empty)
 		size := glyph.Bounds().Size()
-		assert.Equal(size.X, 7)
-		assert.Equal(size.Y, 13)
+		assert.Equal(size.X, 6)
+		assert.Equal(size.Y, 12)
 		assert.NotSame(glyph, mf.Empty())
 
 		// Verify we get the same cached glyph.
@@ -92,8 +92,8 @@ func TestMonoFont(t *testing.T) {
 		glyph, is_empty = mf.Glyph(bad_rune, style)
 		assert.True(is_empty)
 		size = glyph.Bounds().Size()
-		assert.Equal(size.X, 7)
-		assert.Equal(size.Y, 13)
+		assert.Equal(size.X, 6)
+		assert.Equal(size.Y, 12)
 		assert.Same(glyph, mf.Empty())
 	}
 
