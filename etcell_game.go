@@ -4,7 +4,6 @@ package tcell_ebiten
 
 import (
 	"image"
-	"image/color"
 	"math"
 	"time"
 
@@ -15,6 +14,8 @@ import (
 
 type etcellGame struct {
 	*ETCell
+
+	grid_draw []cell // Grid of cells, currently being drawn.
 }
 
 // Validate interface compliance
@@ -54,7 +55,7 @@ func (et *etcellGame) Update() (err error) {
 
 		mouse_capture := et.mouse_capture
 		if mouse_capture.Empty() {
-			mouse_capture = et.grid_image.Bounds()
+			mouse_capture = image.Rect(0, 0, et.layout.X, et.layout.Y)
 		}
 
 		if mouse_capture.Dx() == 0 || mouse_capture.Dy() == 0 {
@@ -168,27 +169,77 @@ func (et *etcellGame) Update() (err error) {
 
 // Draw in ebiten.Game context.
 // If Screen.Suspend() has been called, does nothing.
-func (et *etcellGame) Draw(screen *ebiten.Image) {
-	et.grid_lock.Lock()
-	defer et.grid_lock.Unlock()
-
+func (et *etcellGame) Draw(dst *ebiten.Image) {
 	et.init()
 
 	if et.suspended {
 		return
 	}
 
-	if et.grid_image == nil {
-		return
+	et.grid_lock.Lock()
+	if cap(et.grid_draw) < len(et.grid) {
+		et.grid_draw = make([]cell, len(et.grid))
 	}
-
-	screen.DrawImage(et.grid_image, nil)
+	et.grid_draw = et.grid_draw[0:len(et.grid)]
+	copy(et.grid_draw, et.grid)
+	et.grid_lock.Unlock()
 
 	now := time.Now().UnixMilli()
 	text_blink_ms := now % et.blink_text_ms
 	text_blink_phase := text_blink_ms < (et.blink_text_ms / 2)
-	if text_blink_phase {
-		screen.DrawImage(et.blink_image, nil)
+
+	for n := range et.grid_draw {
+		cell := &et.grid_draw[n]
+
+		if !cell.synced {
+			continue
+		}
+
+		x := float64(cell.point.X)
+		y := float64(cell.point.Y)
+
+		var bg_options ebiten.DrawImageOptions
+		bg_options.ColorScale.ScaleWithColor(cell.bgColor)
+		bg_options.GeoM.Translate(x, y)
+
+		dst.DrawImage(et.cell_image, &bg_options)
+
+		var fg_options ebiten.DrawImageOptions
+		fg_options.ColorScale.ScaleWithColor(cell.fgColor)
+		fg_options.GeoM.Translate(x, y)
+
+		_, _, attr := cell.Style.Decompose()
+
+		// If now blinking, don't draw the text. We _do_ draw underlines and strikethroughs.
+		if (attr&tcell.AttrBlink) == 0 || !text_blink_phase {
+			dst.DrawImage(cell.glyph, &fg_options)
+
+			for _, glyph := range cell.combining {
+				dst.DrawImage(glyph, &fg_options)
+			}
+		}
+
+		// Draw underline, if needed.
+		// We define an underline as the top 1/16 of lower 1/8th of the cell.
+		if (attr & tcell.AttrUnderline) != 0 {
+			var opts ebiten.DrawImageOptions
+			opts.ColorScale.ScaleWithColor(cell.fgColor)
+			opts.GeoM.Scale(1.0, 1.0/16.0)
+			opts.GeoM.Translate(x, y)
+			opts.GeoM.Translate(0, float64(et.cell_size.Y)*(1.0-1.0/8.0))
+			dst.DrawImage(et.cell_image, &opts)
+		}
+
+		// Add strike-through
+		// We define a strike-through as 1/16 of center of the character cell.
+		if (attr & tcell.AttrStrikeThrough) != 0 {
+			var opts ebiten.DrawImageOptions
+			opts.ColorScale.ScaleWithColor(cell.fgColor)
+			opts.GeoM.Scale(1.0, 1.0/16.0)
+			opts.GeoM.Translate(x, y)
+			opts.GeoM.Translate(0, float64(et.cell_size.Y)/2.0-1.0/32.0)
+			dst.DrawImage(et.cell_image, &opts)
+		}
 	}
 
 	cursor_blink_ms := now % et.blink_cursor_ms
@@ -239,7 +290,7 @@ func (et *etcellGame) Draw(screen *ebiten.Image) {
 		pos := image.Point{X: et.cursor.X * et.cell_size.X,
 			Y: et.cursor.Y * et.cell_size.Y}
 		opts.GeoM.Translate(float64(pos.X), float64(pos.Y))
-		screen.DrawImage(et.cell_image, &opts)
+		dst.DrawImage(et.cell_image, &opts)
 	}
 }
 
@@ -275,14 +326,14 @@ func (et *etcellGame) Layout(outsideWidth, outsideHeight int) (screenWidth, scre
 
 	screenWidth = grid_size.X * et.cell_size.X
 	screenHeight = grid_size.Y * et.cell_size.Y
+	et.layout = image.Point{
+		X: screenWidth,
+		Y: screenHeight,
+	}
 
 	if !grid_size.Eq(et.grid_size) {
 		et.grid_size = grid_size
 		et.grid = make([]cell, et.grid_size.X*et.grid_size.Y)
-		et.grid_image = ebiten.NewImage(screenWidth, screenHeight)
-		et.grid_image.Fill(color.Transparent)
-		et.blink_image = ebiten.NewImage(screenWidth, screenHeight)
-		et.blink_image.Fill(color.Transparent)
 
 		et.postEvent(tcell.NewEventResize(et.grid_size.X, et.grid_size.Y))
 	}

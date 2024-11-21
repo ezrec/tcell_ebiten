@@ -293,8 +293,6 @@ func (et *etcellScreen) Show() {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
-	dst := et.grid_image
-
 	pt := image.Point{}
 	n := 0
 	pt.Y = 0
@@ -315,7 +313,6 @@ func (et *etcellScreen) Show() {
 			if cell.synced {
 				continue
 			}
-			cell.synced = true
 
 			if (attr & tcell.AttrInvalid) != 0 {
 				// Ignore all attributes.
@@ -355,38 +352,20 @@ func (et *etcellScreen) Show() {
 				)
 			}
 
-			fg_color := e_color_of(fg)
-			bg_color := e_color_of(bg)
-
-			// Draw background first
-			opts := ebiten.DrawImageOptions{}
-			opts.ColorScale.ScaleWithColor(bg_color)
-			opts.GeoM.Translate(float64(pt.X), float64(pt.Y))
-			dst.DrawImage(et.cell_image, &opts)
-
-			if (attr & tcell.AttrBlink) != 0 {
-				// Add to the blink image.
-				et.blink_image.DrawImage(et.cell_image, &opts)
-			} else {
-				// Clear from the blink image
-				opts.Blend = ebiten.BlendClear
-				et.blink_image.DrawImage(et.cell_image, &opts)
-			}
+			cell.point = pt
+			cell.bgColor = e_color_of(bg)
+			cell.fgColor = e_color_of(fg)
 
 			// Is this a rune that can be displayed?
-			str := string([]rune{cell.Rune})
-			if !et.CanDisplay(cell.Rune, false) {
-				var ok bool
-				str, ok = et.rune_fallback[cell.Rune]
+			runes := append([]rune{cell.Rune}, cell.Combining...)
+			if !et.CanDisplay(runes[0], false) {
+				str, ok := et.rune_fallback[cell.Rune]
 				if !ok {
-					str = " "
+					runes[0] = ' '
+				} else {
+					runes = []rune(str)
 				}
 			}
-
-			// Draw the first rune
-			text_opts := ebiten.DrawImageOptions{}
-			text_opts.ColorScale.ScaleWithColor(fg_color)
-			text_opts.GeoM.Translate(float64(pt.X), float64(pt.Y))
 
 			font_style := font.FontStyleNormal
 			if (attr & (tcell.AttrItalic | tcell.AttrBold)) == (tcell.AttrItalic | tcell.AttrBold) {
@@ -397,38 +376,20 @@ func (et *etcellScreen) Show() {
 				font_style = font.FontStyleBold
 			}
 
-			for _, char := range str {
-				glyph, _ := et.face.Glyph(char, font_style)
-				dst.DrawImage(glyph, &text_opts)
+			cell.glyph, _ = et.face.Glyph(runes[0], font_style)
+
+			if len(runes) > 1 {
+				// Draw the combining runes
+				cell.combining = make([](*ebiten.Image), len(runes[1:]))
+				for n, char := range runes[1:] {
+					glyph, _ := et.face.Glyph(char, font_style)
+					cell.combining[n] = glyph
+				}
+			} else {
+				cell.combining = nil
 			}
 
-			// Draw the combining runes
-			for _, char := range cell.Combining {
-				glyph, _ := et.face.Glyph(char, font_style)
-				dst.DrawImage(glyph, &text_opts)
-			}
-
-			// Draw underline, if needed.
-			// We define an underline as the top 1/16 of lower 1/8th of the cell.
-			if (attr & tcell.AttrUnderline) != 0 {
-				opts := ebiten.DrawImageOptions{}
-				opts.ColorScale.ScaleWithColor(fg_color)
-				opts.GeoM.Scale(1.0, 1.0/16.0)
-				opts.GeoM.Translate(0, float64(et.cell_size.Y)*(1.0-1.0/8.0))
-				opts.GeoM.Translate(float64(pt.X), float64(pt.Y))
-				dst.DrawImage(et.cell_image, &opts)
-			}
-
-			// Add strike-through
-			// We define a strike-through as 1/16 of center of the character cell.
-			if (attr & tcell.AttrStrikeThrough) != 0 {
-				opts := ebiten.DrawImageOptions{}
-				opts.ColorScale.ScaleWithColor(fg_color)
-				opts.GeoM.Scale(1.0, 1.0/16.0)
-				opts.GeoM.Translate(0, float64(et.cell_size.Y)/2.0-1.0/32.0)
-				opts.GeoM.Translate(float64(pt.X), float64(pt.Y))
-				dst.DrawImage(et.cell_image, &opts)
-			}
+			cell.synced = true
 		}
 	}
 }

@@ -18,7 +18,14 @@ type cell struct {
 	Style     tcell.Style
 	Rune      rune
 	Combining []rune
+
 	synced    bool
+	glyph     *ebiten.Image
+	combining [](*ebiten.Image)
+
+	point   image.Point
+	fgColor color.Color
+	bgColor color.Color
 }
 
 // ETCell is the ebiten to tcell manager. An empty ETCell is valid, and ready to use. An ETCell should
@@ -49,14 +56,13 @@ type ETCell struct {
 
 	fixed_layout image.Point
 	fixed_size   image.Point
+	layout       image.Point
 
 	face      font.Face   // Font face used for this screen.
 	grid_size image.Point // Size of the grid, in cells.
 	cell_size image.Point // Size of a single cell, in pixels.
 
-	grid        []cell        // Grid of cells, not yet visible.
-	grid_image  *ebiten.Image // Image of the grid.
-	blink_image *ebiten.Image // Blink cells.
+	grid []cell // Grid of cells, not yet visible.
 
 	cursor image.Point // Position of cursor, in grid cells
 
