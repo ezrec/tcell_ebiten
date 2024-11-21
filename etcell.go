@@ -24,8 +24,8 @@ type cell struct {
 	combining [](*ebiten.Image)
 
 	point   image.Point
-	fgColor color.Color
-	bgColor color.Color
+	fgColor color.RGBA
+	bgColor color.RGBA
 }
 
 // ETCell is the ebiten to tcell manager. An empty ETCell is valid, and ready to use. An ETCell should

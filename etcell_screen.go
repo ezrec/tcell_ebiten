@@ -280,7 +280,7 @@ func (et *etcellScreen) Colors() (ncolors int) {
 	return
 }
 
-func e_color_of(c tcell.Color) color.Color {
+func e_color_of(c tcell.Color) color.RGBA {
 	r, g, b := c.TrueColor().RGB()
 	return color.RGBA{uint8(r), uint8(g), uint8(b), 255}
 }
