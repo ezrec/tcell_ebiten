@@ -1,12 +1,12 @@
 // Copyright 2024, Jason S. McMullan <jason.mcmullan@gmail.com>
 
-package tcell_ebiten
+package etcell
 
 import (
 	"image"
 	"image/color"
 
-	"github.com/ezrec/tcell_ebiten/font"
+	"github.com/ezrec/etcell/font"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -30,7 +30,8 @@ func (et *etcellScreen) Init() (err error) {
 
 // Fini finalizes the screen also releasing resources.
 func (et *etcellScreen) Fini() {
-	close(et.event_channel)
+    close(et.event_channel)
+    et.event_channel = nil
 }
 
 // Clear logically erases the screen.

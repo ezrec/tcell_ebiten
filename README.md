@@ -14,10 +14,8 @@ In your `tcell` program, add the following imports:
 
 ```
 import (
-    "github.com/ezrec/tcell_ebiten"
-    "github.com/hajimehoshi/bitmapfont/v3"
+    "github.com/ezrec/etcell"
     "github.com/hajimehoshi/ebiten/v2"
-    "github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 |  // Define a nominal window size.
@@ -41,19 +39,19 @@ func main() {
 |  font_face = text.NewGoXFace(bitmapfont.Face)
 |
 |  // Create a proxy between the ebiten and tcell engines.
-|  gs := tcell_ebiten.NewGameScreen(font_face)
-|  gs.Init()
-|  defer gs.Fini()
+|  et := etcell.NewETCell()
 |
 |  go func () {
-|      app.SetScreen(gs)
+|      screen := et.Screen()
+|      screen.Init()
+|      defer screen.Fini()
+|      app.SetScreen(screen)
        e := app.Run()
-|      gs.Close()
        if e != nil {
           fmt.Fprintln(os.Stderr, e.Error())
           os.Exit(1)
        }
 |  }
-|  ebiten.RunGame(gs)
+|  ebiten.RunGame(et.Game())
 }
 ```

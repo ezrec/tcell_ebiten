@@ -5,8 +5,8 @@ package main
 import (
 	"log"
 
-	"github.com/ezrec/tcell_ebiten"
-	"github.com/ezrec/tcell_ebiten/font"
+	"github.com/ezrec/etcell"
+	"github.com/ezrec/etcell/font"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,7 +15,7 @@ import (
 
 type DemoGame struct {
 	text_run    interface{ Run() error }
-	game_screen *tcell_ebiten.ETCell
+	game_screen *etcell.ETCell
 	text_game   interface {
 		ebiten.Game
 		LayoutF(x, y float64) (sx, sy float64)
@@ -32,7 +32,7 @@ func NewDemoGame() (dg *DemoGame) {
 		panic(err)
 	}
 
-	gs := &tcell_ebiten.ETCell{}
+	gs := &etcell.ETCell{}
 	gs.SetFont(font_face)
 
 	screen := gs.Screen()
@@ -85,7 +85,7 @@ func main() {
 	dg := NewDemoGame()
 
 	ebiten.SetWindowSize(800, 600)
-	ebiten.SetWindowTitle("tcell_ebiten demo")
+	ebiten.SetWindowTitle("etcell demo")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
 	err := dg.game_screen.Run(func(screen tcell.Screen) error {

@@ -1,6 +1,6 @@
 // Copyright 2024, Jason S. McMullan <jason.mcmullan@gmail.com>
 
-package tcell_ebiten
+package etcell
 
 import (
 	"image"

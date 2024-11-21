@@ -4,8 +4,8 @@ import (
 	"log"
 	"math/rand"
 
-	"github.com/ezrec/tcell_ebiten"
-	"github.com/ezrec/tcell_ebiten/font"
+	"github.com/ezrec/etcell"
+	"github.com/ezrec/etcell/font"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -74,10 +74,10 @@ func noise(screen tcell.Screen) (err error) {
 
 func main() {
 	ebiten.SetWindowSize(800, 600)
-	ebiten.SetWindowTitle("tcell_ebiten noise")
+	ebiten.SetWindowTitle("etcell noise")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
-	et := tcell_ebiten.ETCell{}
+	et := etcell.ETCell{}
 
 	var err error
 	font_face := &font.FaceWithStyle{StyleMap: map[font.FontStyle]font.Face{}}
