@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 
 	typesetting_font "github.com/go-text/typesetting/font"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -126,6 +125,8 @@ func (mf *CacheFont) Glyph(character rune, style FontStyle) (glyph *ebiten.Image
 type MonoFont struct {
 	CacheFont
 	Face ebiten_text.Face
+
+	drawOptions ebiten_text.DrawOptions
 }
 
 // Assert interface compliance.
@@ -156,9 +157,12 @@ func NewMonoFont(source any) (mf *MonoFont, err error) {
 	const reference_rune = '█'
 
 	metrics := face.Metrics()
-	height := int(math.Floor(metrics.HLineGap + metrics.HAscent + metrics.HDescent))
-	width_f, _ := ebiten_text.Measure(string([]rune{reference_rune}), face, metrics.HLineGap)
-	width := int(math.Floor(width_f))
+	width_f, height_f := ebiten_text.Measure(string([]rune{reference_rune}), face, metrics.HLineGap)
+	height := int(height_f)
+	width := int(width_f)
+
+	scale_w := float64(width) / width_f
+	scale_h := float64(height) / height_f
 
 	mf = &MonoFont{
 		CacheFont: CacheFont{
@@ -168,6 +172,8 @@ func NewMonoFont(source any) (mf *MonoFont, err error) {
 		},
 		Face: face,
 	}
+
+	mf.drawOptions.GeoM.Scale(scale_w, scale_h)
 
 	return
 }
@@ -242,7 +248,7 @@ func (mf *MonoFont) Glyph(character rune, style FontStyle) (glyph *ebiten.Image,
 		} else {
 			// Generate new glyph for this rune.
 			glyph = ebiten.NewImage(mf.Width, mf.Height)
-			ebiten_text.Draw(glyph, string([]rune{character}), mf.Face, nil)
+			ebiten_text.Draw(glyph, string([]rune{character}), mf.Face, &mf.drawOptions)
 		}
 
 		mf.CacheFont.SetGlyph(character, glyph)

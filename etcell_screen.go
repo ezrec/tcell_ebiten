@@ -298,10 +298,10 @@ func (et *etcellScreen) Show() {
 	n := 0
 	pt.Y = 0
 	for y := 0; y < et.grid_size.Y; y++ {
-		pt.Y = y * et.cell_size.Y
+		pt.Y = y
 		pt.X = 0
 		for x := 0; x < et.grid_size.X; x++ {
-			pt.X = x * et.cell_size.X
+			pt.X = x
 			cell := &et.grid[n]
 			n++
 

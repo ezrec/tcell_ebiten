@@ -195,8 +195,8 @@ func (et *etcellGame) Draw(dst *ebiten.Image) {
 			continue
 		}
 
-		x := float64(cell.point.X)
-		y := float64(cell.point.Y)
+		x := float64(cell.point.X * et.cell_size.X)
+		y := float64(cell.point.Y * et.cell_size.Y)
 
 		var bg_options ebiten.DrawImageOptions
 		bg_options.ColorScale.ScaleWithColor(cell.bgColor)
