@@ -6,7 +6,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/go-text/typesetting v0.2.0
 	github.com/hajimehoshi/ebiten/v2 v2.8.4
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	golang.org/x/image v0.22.0
 )
 
