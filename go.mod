@@ -1,4 +1,4 @@
-module github.com/ezrec/etcell
+module github.com/ezrec/tcell_ebiten
 
 go 1.23.1
 

@@ -14,7 +14,7 @@ In your `tcell` program, add the following imports:
 
 ```
 import (
-    "github.com/ezrec/etcell"
+    "github.com/ezrec/tcell_ebiten"
     "github.com/hajimehoshi/ebiten/v2"
 )
 

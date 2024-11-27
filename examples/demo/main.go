@@ -5,8 +5,8 @@ package main
 import (
 	"log"
 
-	"github.com/ezrec/etcell"
-	"github.com/ezrec/etcell/font"
+	etcell "github.com/ezrec/tcell_ebiten"
+	"github.com/ezrec/tcell_ebiten/font"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"

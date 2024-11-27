@@ -1,11 +1,11 @@
 // Copyright 2024, Jason S. McMullan <jason.mcmullan@gmail.com>
 
-package etcell
+package tcell_ebiten
 
 import (
 	"testing"
 
-	"github.com/ezrec/etcell/font"
+	"github.com/ezrec/tcell_ebiten/font"
 
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/gofont/gomonobold"

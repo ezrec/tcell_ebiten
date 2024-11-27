@@ -1,12 +1,12 @@
 // Copyright 2024, Jason S. McMullan <jason.mcmullan@gmail.com>
 
-package etcell
+package tcell_ebiten
 
 import (
 	"image"
 	"image/color"
 
-	"github.com/ezrec/etcell/font"
+	"github.com/ezrec/tcell_ebiten/font"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
