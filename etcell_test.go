@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/gdamore/tcell/v2"
+
+	ebiten_text "github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 ////// ETCell() unit tests
@@ -59,4 +61,38 @@ func TestETCell(t *testing.T) {
 	swidth, sheight := game.Layout(cell_size_X*20+1, cell_size_Y*30+2)
 	assert.Equal(cell_size_X*20, swidth)
 	assert.Equal(cell_size_Y*30, sheight)
+}
+
+func TestETCellResizeAny(t *testing.T) {
+	assert := assert.New(t)
+
+	face := &font.CacheFont{
+		FontMetrics: ebiten_text.Metrics{HAscent: 2.5, HDescent: 0.5},
+		Width:       2,
+		Height:      3,
+	}
+
+	et := &ETCell{}
+	et.SetFont(face)
+
+	game := et.Game()
+	screen := et.Screen()
+
+	table := [](struct {
+		lx, ly int
+		gx, gy int
+		sx, sy int
+	}){
+		{lx: 2, ly: 3, gx: 2, gy: 3, sx: 1, sy: 1},
+		{lx: 200, ly: 600, gx: 200, gy: 600, sx: 100, sy: 200},
+	}
+
+	for _, entry := range table {
+		gx, gy := game.Layout(entry.lx, entry.ly)
+		assert.Equal(entry.gx, gx)
+		assert.Equal(entry.gy, gy)
+		sx, sy := screen.Size()
+		assert.Equal(entry.sx, sx)
+		assert.Equal(entry.sy, sy)
+	}
 }
