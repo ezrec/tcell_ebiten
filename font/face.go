@@ -32,6 +32,7 @@ type Face interface {
 	Metrics() (metrics ebiten_text.Metrics)
 	Size() (width, height int) // Character cell size, in pixels.
 	Glyph(character rune, style FontStyle) (glyph *ebiten.Image, is_empty bool)
+	Empty() (empty_glyph *ebiten.Image)
 }
 
 // Implements Face
@@ -262,6 +263,37 @@ func (mf *MonoFont) Glyph(character rune, style FontStyle) (glyph *ebiten.Image,
 	return
 }
 
+// FaceWithOnlyRunes limits the font to only the specified runes.
+type FaceWithOnlyRunes struct {
+	Face
+	Runes []rune
+
+	runemap map[rune](struct{})
+}
+
+// Assert interface compliance.
+var _ Face = (*FaceWithOnlyRunes)(nil)
+
+// Glyph returns the image for the rune, so long as it is in the mapping.
+func (fm *FaceWithOnlyRunes) Glyph(character rune, style FontStyle) (glyph *ebiten.Image, is_empty bool) {
+	if len(fm.runemap) != len(fm.Runes) {
+		fm.runemap = make(map[rune](struct{}), len(fm.Runes))
+		for _, r := range fm.Runes {
+			fm.runemap[r] = struct{}{}
+		}
+	}
+
+	_, ok := fm.runemap[character]
+	if !ok {
+		glyph = fm.Face.Empty()
+		is_empty = true
+	} else {
+		glyph, is_empty = fm.Face.Glyph(character, style)
+	}
+
+	return
+}
+
 // FaceWithRuneMapping applies a rune mapping to a font.
 // Implements [Face]
 type FaceWithRuneMapping struct {
@@ -355,6 +387,11 @@ func (fm *FaceWithStyle) Metrics() ebiten_text.Metrics {
 // Size returns the font size.
 func (fm *FaceWithStyle) Size() (width, height int) {
 	return fm.forStyle(FontStyleNormal).Size()
+}
+
+// Empty returns the empty glyph
+func (fm *FaceWithStyle) Empty() (glyph *ebiten.Image) {
+	return fm.forStyle(FontStyleNormal).Empty()
 }
 
 // Glyph returns the image for the rune, using the appropriate style font.
