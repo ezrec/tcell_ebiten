@@ -12,15 +12,15 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type etcellScreen struct {
+type ETCellScreen struct {
 	*ETCell
 }
 
 // Validate interface compliance
-var _ tcell.Screen = (*etcellScreen)(nil)
+var _ tcell.Screen = (*ETCellScreen)(nil)
 
 // Init initializes the screen for use.
-func (et *etcellScreen) Init() (err error) {
+func (et *ETCellScreen) Init() (err error) {
 	et.event_channel = make(chan tcell.Event, 128)
 
 	et.Clear()
@@ -29,21 +29,21 @@ func (et *etcellScreen) Init() (err error) {
 }
 
 // Fini finalizes the screen also releasing resources.
-func (et *etcellScreen) Fini() {
+func (et *ETCellScreen) Fini() {
 	close(et.event_channel)
 	et.event_channel = nil
 }
 
 // Clear logically erases the screen.
 // This is effectively a short-cut for Fill(' ', StyleDefault).
-func (et *etcellScreen) Clear() {
+func (et *ETCellScreen) Clear() {
 	et.Fill(' ', tcell.StyleDefault)
 }
 
 // Fill fills the screen with the given character and style.
 // The effect of filling the screen is not visible until Show
 // is called (or Sync).
-func (et *etcellScreen) Fill(r rune, style tcell.Style) {
+func (et *ETCellScreen) Fill(r rune, style tcell.Style) {
 	for n := 0; n < len(et.grid); n++ {
 		et.grid[n] = cell{
 			Style: style,
@@ -54,7 +54,7 @@ func (et *etcellScreen) Fill(r rune, style tcell.Style) {
 
 // SetCell is an older API, and will be removed.  Please use
 // SetContent instead; SetCell is implemented in terms of SetContent.
-func (et *etcellScreen) SetCell(x int, y int, style tcell.Style, ch ...rune) {
+func (et *ETCellScreen) SetCell(x int, y int, style tcell.Style, ch ...rune) {
 	if len(ch) == 0 {
 		ch = []rune{' '}
 	}
@@ -68,7 +68,7 @@ func (et *etcellScreen) SetCell(x int, y int, style tcell.Style, ch ...rune) {
 // be displayed if Show() or Sync() is called.  The width is the width
 // in screen cells; most often this will be 1, but some East Asian
 // characters and emoji require two cells.
-func (et *etcellScreen) GetContent(x, y int) (primary rune, combining []rune, style tcell.Style, width int) {
+func (et *ETCellScreen) GetContent(x, y int) (primary rune, combining []rune, style tcell.Style, width int) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -103,7 +103,7 @@ func (et *etcellScreen) GetContent(x, y int) (primary rune, combining []rune, st
 // and attempts to place character at next cell to the right will have
 // undefined effects.  Wide runes that are printed in the
 // last column will be replaced with a single width space on output.
-func (et *etcellScreen) SetContent(x int, y int, primary rune, combining []rune, style tcell.Style) {
+func (et *ETCellScreen) SetContent(x int, y int, primary rune, combining []rune, style tcell.Style) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -126,33 +126,33 @@ func (et *etcellScreen) SetContent(x int, y int, primary rune, combining []rune,
 // SetStyle sets the default style to use when clearing the screen
 // or when StyleDefault is specified.  If it is also StyleDefault,
 // then whatever system/terminal default is relevant will be used.
-func (et *etcellScreen) SetStyle(style tcell.Style) {
+func (et *ETCellScreen) SetStyle(style tcell.Style) {
 	et.style_default = style
 }
 
 // ShowCursor is used to display the cursor at a given location.
 // If the coordinates -1, -1 are given or are otherwise outside the
 // dimensions of the screen, the cursor will be hidden.
-func (et *etcellScreen) ShowCursor(x int, y int) {
+func (et *ETCellScreen) ShowCursor(x int, y int) {
 	et.cursor = image.Point{X: x, Y: y}
 }
 
 // HideCursor is used to hide the cursor.  It's an alias for
 // ShowCursor(-1, -1).sim
-func (et *etcellScreen) HideCursor() {
+func (et *ETCellScreen) HideCursor() {
 	et.ShowCursor(-1, -1)
 }
 
 // SetCursorStyle is used to set the cursor style.  If the style
 // is not supported (or cursor styles are not supported at all),
 // then this will have no effect.
-func (et *etcellScreen) SetCursorStyle(cs tcell.CursorStyle) {
+func (et *ETCellScreen) SetCursorStyle(cs tcell.CursorStyle) {
 	et.cursor_style = cs
 }
 
 // Size returns the screen size as width, height.  This changes in
 // response to a call to Clear or Flush.
-func (et *etcellScreen) Size() (width, height int) {
+func (et *ETCellScreen) Size() (width, height int) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -171,7 +171,7 @@ func (et *etcellScreen) Size() (width, height int) {
 // This method should be used as a goroutine.
 //
 // NOTE: PollEvent should not be called while this method is running.
-func (et *etcellScreen) ChannelEvents(ch chan<- tcell.Event, quit <-chan struct{}) {
+func (et *ETCellScreen) ChannelEvents(ch chan<- tcell.Event, quit <-chan struct{}) {
 	go func() {
 		for {
 			select {
@@ -188,7 +188,7 @@ func (et *etcellScreen) ChannelEvents(ch chan<- tcell.Event, quit <-chan struct{
 // PollEvent waits for events to arrive.  Main application loops
 // must spin on this to prevent the application from stalling.
 // Furthermore, this will return nil if the Screen is finalized.
-func (et *etcellScreen) PollEvent() (ev tcell.Event) {
+func (et *ETCellScreen) PollEvent() (ev tcell.Event) {
 	ev = <-et.event_channel
 	return ev
 }
@@ -198,14 +198,14 @@ func (et *etcellScreen) PollEvent() (ev tcell.Event) {
 // return nil, then the return value from this function is unspecified.
 // The purpose of this function is to allow multiple events to be collected
 // at once, to minimize screen redraws.
-func (et *etcellScreen) HasPendingEvent() (has bool) {
+func (et *ETCellScreen) HasPendingEvent() (has bool) {
 	return len(et.event_channel) != 0
 }
 
 // PostEvent tries to post an event into the event stream.  This
 // can fail if the event queue is full.  In that case, the event
 // is dropped, and ErrEventQFull is returned.
-func (et *etcellScreen) PostEvent(ev tcell.Event) (err error) {
+func (et *ETCellScreen) PostEvent(ev tcell.Event) (err error) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -225,41 +225,41 @@ func (et *etcellScreen) PostEvent(ev tcell.Event) (err error) {
 //
 // For this reason, when using this function, the use of a
 // Goroutine is recommended to ensure no deadlock can occur.
-func (et *etcellScreen) PostEventWait(ev tcell.Event) {
+func (et *ETCellScreen) PostEventWait(ev tcell.Event) {
 	et.PostEvent(ev)
 }
 
 // EnableMouse enables the mouse.  (If your terminal supports it.)
 // If no flags are specified, then all events are reported, if the
 // terminal supports them.
-func (et *etcellScreen) EnableMouse(flags ...tcell.MouseFlags) {
+func (et *ETCellScreen) EnableMouse(flags ...tcell.MouseFlags) {
 	for _, flag := range flags {
 		et.mouse_flags |= flag
 	}
 }
 
 // DisableMouse disables the mouse.
-func (et *etcellScreen) DisableMouse() {
+func (et *ETCellScreen) DisableMouse() {
 	et.mouse_flags = 0
 }
 
 // EnablePaste enables bracketed paste mode, if supported.
-func (et *etcellScreen) EnablePaste() {
+func (et *ETCellScreen) EnablePaste() {
 	et.enable_paste = true
 }
 
 // DisablePaste disables bracketed paste mode.
-func (et *etcellScreen) DisablePaste() {
+func (et *ETCellScreen) DisablePaste() {
 	et.enable_paste = false
 }
 
 // EnableFocus enables reporting of focus events, if your terminal supports it.
-func (et *etcellScreen) EnableFocus() {
+func (et *ETCellScreen) EnableFocus() {
 	et.enable_focus = true
 }
 
 // DisableFocus disables reporting of focus events.
-func (et *etcellScreen) DisableFocus() {
+func (et *ETCellScreen) DisableFocus() {
 	et.enable_focus = false
 }
 
@@ -267,7 +267,7 @@ func (et *etcellScreen) DisableFocus() {
 // mouse.  Note that the return value of true doesn't guarantee that
 // a mouse/pointing device is present; a false return definitely
 // indicates no mouse support is available.
-func (et *etcellScreen) HasMouse() (has bool) {
+func (et *ETCellScreen) HasMouse() (has bool) {
 	has = true
 	return
 }
@@ -275,7 +275,7 @@ func (et *etcellScreen) HasMouse() (has bool) {
 // Colors returns the number of colors.  All colors are assumed to
 // use the ANSI color map.  If a terminal is monochrome, it will
 // return 0.
-func (et *etcellScreen) Colors() (ncolors int) {
+func (et *ETCellScreen) Colors() (ncolors int) {
 	ncolors = 16
 	return
 }
@@ -290,7 +290,7 @@ func e_color_of(c tcell.Color) color.RGBA {
 //
 // It does so in the most efficient and least visually disruptive
 // manner possible.
-func (et *etcellScreen) Show() {
+func (et *ETCellScreen) Show() {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -403,7 +403,7 @@ func (et *etcellScreen) Show() {
 // Typically, this is called as a result of a user-requested redraw
 // (e.g. to clear up on-screen corruption caused by some other program),
 // or during a resize event.
-func (et *etcellScreen) Sync() {
+func (et *ETCellScreen) Sync() {
 	et.grid_lock.Lock()
 	for n := 0; n < len(et.grid); n++ {
 		et.grid[n].synced = false
@@ -418,7 +418,7 @@ func (et *etcellScreen) Sync() {
 // character set.  Note that this is just for diagnostic purposes,
 // we normally translate input/output to/from UTF-8, regardless of
 // what the user's environment is.
-func (et *etcellScreen) CharacterSet() (charset string) {
+func (et *ETCellScreen) CharacterSet() (charset string) {
 	charset = "UTF-8"
 	return
 }
@@ -442,7 +442,7 @@ func (et *etcellScreen) CharacterSet() (charset string) {
 //
 // It is recommended that replacement strings consist only of
 // 7-bit ASCII, since other characters may not display everywhere.
-func (et *etcellScreen) RegisterRuneFallback(r rune, subst string) {
+func (et *ETCellScreen) RegisterRuneFallback(r rune, subst string) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -458,7 +458,7 @@ func (et *etcellScreen) RegisterRuneFallback(r rune, subst string) {
 // glyph is available, '?' is emitted instead.  It is not possible
 // to "disable" the use of alternate characters that are supported
 // by your terminal except by changing the terminal database.
-func (et *etcellScreen) UnregisterRuneFallback(r rune) {
+func (et *ETCellScreen) UnregisterRuneFallback(r rune) {
 	delete(et.rune_fallback, r)
 }
 
@@ -471,7 +471,7 @@ func (et *etcellScreen) UnregisterRuneFallback(r rune) {
 // fallbacks are registered, this will return true.  This will
 // also return true if the terminal can replace the glyph with
 // one that is visually indistinguishable from the one requested.
-func (et *etcellScreen) CanDisplay(r rune, checkFallbacks bool) (can bool) {
+func (et *ETCellScreen) CanDisplay(r rune, checkFallbacks bool) (can bool) {
 	_, is_empty := et.face.Glyph(r, font.FontStyleNormal)
 
 	can = !is_empty
@@ -486,7 +486,7 @@ func (et *etcellScreen) CanDisplay(r rune, checkFallbacks bool) (can bool) {
 // Resize does nothing, since it's generally not possible to
 // ask a screen to resize, but it allows the Screen to implement
 // the View interface.
-func (et *etcellScreen) Resize(int, int, int, int) {
+func (et *ETCellScreen) Resize(int, int, int, int) {
 	// Not implemented.
 }
 
@@ -498,7 +498,7 @@ func (et *etcellScreen) Resize(int, int, int, int) {
 // on this function, but it can be used for hinting when building
 // menus, displayed hot-keys, etc.  Note that KeyRune (literal
 // runes) is always true.
-func (et *etcellScreen) HasKey(key tcell.Key) (has bool) {
+func (et *ETCellScreen) HasKey(key tcell.Key) (has bool) {
 
 	switch {
 	case key == tcell.KeyRune:
@@ -515,7 +515,7 @@ func (et *etcellScreen) HasKey(key tcell.Key) (has bool) {
 // Suspend pauses input and output processing.  It also restores the
 // terminal settings to what they were when the application started.
 // This can be used to, for example, run a sub-shell.
-func (et *etcellScreen) Suspend() (err error) {
+func (et *ETCellScreen) Suspend() (err error) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -524,7 +524,7 @@ func (et *etcellScreen) Suspend() (err error) {
 }
 
 // Resume resumes after Suspend().
-func (et *etcellScreen) Resume() (err error) {
+func (et *ETCellScreen) Resume() (err error) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -534,7 +534,7 @@ func (et *etcellScreen) Resume() (err error) {
 
 // Beep attempts to sound an OS-dependent audible alert and returns an error
 // when unsuccessful.
-func (et *etcellScreen) Beep() (err error) {
+func (et *ETCellScreen) Beep() (err error) {
 	if et.on_beep != nil {
 		err = et.on_beep()
 	}
@@ -548,19 +548,19 @@ func (et *etcellScreen) Beep() (err error) {
 // Many terminals cannot support this.  Perversely, the "modern" Windows Terminal
 // does not support application-initiated resizing, whereas the legacy terminal does.
 // Also, some emulators can support this but may have it disabled by default.
-func (et *etcellScreen) SetSize(int, int) {
+func (et *ETCellScreen) SetSize(int, int) {
 	// Not implemented.
 }
 
 // LockRegion sets or unsets a lock on a region of cells. A lock on a
 // cell prevents the cell from being redrawn.
-func (et *etcellScreen) LockRegion(x, y, width, height int, lock bool) {
+func (et *ETCellScreen) LockRegion(x, y, width, height int, lock bool) {
 	// Not implemented.
 }
 
 // Tty returns the underlying Tty. If the screen is not a terminal, the
 // returned bool will be false
-func (et *etcellScreen) Tty() (tty tcell.Tty, is_tty bool) {
+func (et *ETCellScreen) Tty() (tty tcell.Tty, is_tty bool) {
 	// Not implemented
 	tty = nil
 	is_tty = false

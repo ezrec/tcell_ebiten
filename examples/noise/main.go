@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
+	"math"
 	"math/rand"
+	"time"
 
 	"github.com/ezrec/etcell"
 	"github.com/ezrec/etcell/font"
@@ -15,11 +18,24 @@ import (
 	"golang.org/x/image/font/gofont/gomonoitalic"
 )
 
-func noise(screen tcell.Screen) (err error) {
+type Noise struct {
+	etcell.ETCell
+
+	updating bool
+}
+
+func (n *Noise) Run() (err error) {
+	err = n.ETCell.Run(n.runner)
+	return
+}
+
+func (n *Noise) runner(screen tcell.Screen) (err error) {
 	screen.Init()
 	defer screen.Fini()
 
-	updating := true
+	var cursor_x, cursor_y int
+
+	n.updating = true
 
 	style := tcell.StyleDefault.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
 
@@ -35,15 +51,18 @@ func noise(screen tcell.Screen) (err error) {
 				return nil
 			case tcell.KeyRune:
 				// 'any' key
-				updating = !updating
+				n.updating = !n.updating
 			}
+		case *tcell.EventMouse:
+			cursor_x, cursor_y = ev.Position()
+			screen.ShowCursor(cursor_x, cursor_y)
 		case *tcell.EventResize:
 			screen.Sync()
 		case *tcell.EventInterrupt:
 			screen.Sync()
 		}
 
-		if !updating {
+		if !n.updating {
 			continue
 		}
 
@@ -72,12 +91,37 @@ func noise(screen tcell.Screen) (err error) {
 	}
 }
 
+func (n *Noise) Spin(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Duration(10) * time.Millisecond):
+			now := float64(time.Now().UnixMilli()) / 1000.0
+
+			rotation_cycle_s := 5.0
+			theta := math.Mod(now, rotation_cycle_s) / rotation_cycle_s * math.Pi * 2
+			var geom ebiten.GeoM
+			w, h := n.GetGameSize()
+			w_2 := float64(w) / 2
+			h_2 := float64(h) / 2
+			geom.Translate(-w_2, -h_2)
+			geom.Rotate(theta)
+			geom.Translate(w_2, h_2)
+
+			if n.updating {
+				n.SetGameGeoM(geom)
+			}
+		}
+	}
+}
+
 func main() {
 	ebiten.SetWindowSize(800, 600)
 	ebiten.SetWindowTitle("etcell noise")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
-	et := etcell.ETCell{}
+	noise := &Noise{}
 
 	var err error
 	font_face := &font.FaceWithStyle{StyleMap: map[font.FontStyle]font.Face{}}
@@ -98,9 +142,13 @@ func main() {
 		panic(err)
 	}
 
-	et.SetFont(font_face)
+	noise.SetFont(font_face)
 
-	err = et.Run(noise)
+	ctx, cancel := context.WithCancel(context.Background())
+	go noise.Spin(ctx)
+
+	err = noise.Run()
+	cancel()
 	if err != nil {
 		log.Fatal(err)
 	}
