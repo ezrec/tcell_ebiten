@@ -5,6 +5,7 @@ package tcell_ebiten
 import (
 	"image"
 	"image/color"
+	"sync"
 
 	"github.com/ezrec/tcell_ebiten/font"
 
@@ -12,8 +13,57 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+type cell struct {
+	Style     tcell.Style
+	Rune      rune
+	Combining []rune
+
+	synced    bool
+	glyph     *ebiten.Image
+	combining [](*ebiten.Image)
+
+	point   image.Point
+	fgColor color.RGBA
+	bgColor color.RGBA
+}
+
 type ETCellScreen struct {
-	*ETCell
+	grid_lock sync.Mutex
+
+	// on_beep is called when the tcell.Screen.Beep() is invoked.
+	on_beep func() error
+
+	layout image.Rectangle
+
+	face      font.Face   // Font face used for this screen.
+	grid_size image.Point // Size of the grid, in cells.
+	cell_size image.Point // Size of a single cell, in pixels.
+
+	grid []cell // Grid of cells, not yet visible.
+
+	cursor image.Point // Position of cursor, in grid cells
+
+	style_default tcell.Style // Default text style
+
+	cursor_color    tcell.Color       // Color of the cursor
+	blink_cursor_ms int64             // Cursor blink _cycle_ duration in ms.
+	cursor_style    tcell.CursorStyle // Cursor style
+
+	blink_text_ms int64 // Text blink _cycle_ duration in ms.
+
+	cell_image *ebiten.Image // All-white image of a single cell
+
+	focused      bool
+	mouse_flags  tcell.MouseFlags
+	enable_focus bool
+	enable_paste bool
+
+	event_channel chan tcell.Event
+
+	rune_fallback map[rune]string
+
+	suspended   bool  // Input/output is suspended.
+	close_error error // Closing error. ebiten.ErrTermination is used for clean shutdown.
 }
 
 // Validate interface compliance
@@ -564,5 +614,31 @@ func (et *ETCellScreen) Tty() (tty tcell.Tty, is_tty bool) {
 	// Not implemented
 	tty = nil
 	is_tty = false
+	return
+}
+
+// postEvent helper
+func (et *ETCellScreen) postEvent(ev tcell.Event) (err error) {
+	if et.event_channel == nil {
+		return
+	}
+
+	switch ev.(type) {
+	case *tcell.EventFocus:
+		if !et.enable_focus {
+			return
+		}
+	case *tcell.EventPaste:
+		if !et.enable_paste {
+			return
+		}
+	case *tcell.EventMouse:
+		if et.mouse_flags == tcell.MouseFlags(0) {
+			return
+		}
+	default:
+	}
+
+	et.event_channel <- ev
 	return
 }

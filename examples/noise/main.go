@@ -1,11 +1,8 @@
 package main
 
 import (
-	"context"
 	"log"
-	"math"
 	"math/rand"
-	"time"
 
 	etcell "github.com/ezrec/tcell_ebiten"
 	"github.com/ezrec/tcell_ebiten/font"
@@ -91,31 +88,6 @@ func (n *Noise) runner(screen tcell.Screen) (err error) {
 	}
 }
 
-func (n *Noise) Spin(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(time.Duration(10) * time.Millisecond):
-			now := float64(time.Now().UnixMilli()) / 1000.0
-
-			rotation_cycle_s := 5.0
-			theta := math.Mod(now, rotation_cycle_s) / rotation_cycle_s * math.Pi * 2
-			var geom ebiten.GeoM
-			w, h := n.GetGameSize()
-			w_2 := float64(w) / 2
-			h_2 := float64(h) / 2
-			geom.Translate(-w_2, -h_2)
-			geom.Rotate(theta)
-			geom.Translate(w_2, h_2)
-
-			if n.updating {
-				n.SetGameGeoM(geom)
-			}
-		}
-	}
-}
-
 func main() {
 	ebiten.SetWindowSize(800, 600)
 	ebiten.SetWindowTitle("etcell noise")
@@ -144,11 +116,7 @@ func main() {
 
 	noise.SetFont(font_face)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go noise.Spin(ctx)
-
 	err = noise.Run()
-	cancel()
 	if err != nil {
 		log.Fatal(err)
 	}

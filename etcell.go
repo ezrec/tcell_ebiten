@@ -7,69 +7,16 @@ package tcell_ebiten
 import (
 	"image"
 	"image/color"
-	"sync"
 
 	"github.com/ezrec/tcell_ebiten/font"
 	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type cell struct {
-	Style     tcell.Style
-	Rune      rune
-	Combining []rune
-
-	synced    bool
-	glyph     *ebiten.Image
-	combining [](*ebiten.Image)
-
-	point   image.Point
-	fgColor color.RGBA
-	bgColor color.RGBA
-}
-
 // ETCell is the ebiten to tcell manager. An empty ETCell is valid,
 // and ready to use. An ETCell should not be copied.
 type ETCell struct {
-	grid_lock sync.Mutex
-
-	// on_beep is called when the tcell.Screen.Beep() is invoked.
-	on_beep func() error
-
-	layout image.Rectangle
-
-	face      font.Face   // Font face used for this screen.
-	grid_size image.Point // Size of the grid, in cells.
-	cell_size image.Point // Size of a single cell, in pixels.
-
-	grid      []cell // Grid of cells, not yet visible.
-	grid_draw []cell // Grid of cells, currently being drawn.
-
-	cursor image.Point // Position of cursor, in grid cells
-
-	style_default tcell.Style // Default text style
-
-	cursor_color    tcell.Color       // Color of the cursor
-	blink_cursor_ms int64             // Cursor blink _cycle_ duration in ms.
-	cursor_style    tcell.CursorStyle // Cursor style
-
-	blink_text_ms int64 // Text blink _cycle_ duration in ms.
-
-	cell_image *ebiten.Image // All-white image of a single cell
-
-	focused      bool
-	mouse_flags  tcell.MouseFlags
-	enable_focus bool
-	enable_paste bool
-
-	event_channel chan tcell.Event
-
-	rune_fallback map[rune]string
-
-	suspended   bool  // Input/output is suspended.
-	close_error error // Closing error. ebiten.ErrTermination is used for clean shutdown.
-
-	geom ebiten.GeoM
+	ETCellScreen
 }
 
 // init initializes any default fields.
@@ -168,49 +115,13 @@ func (et *ETCell) setFont(face font.Face) {
 	et.cell_image.Fill(color.White)
 }
 
-// SetGameGeoM sets the Ebiten.GeoM for display by Game.Draw() and mouse input mapping by Game.Update().
-func (et *ETCell) SetGameGeoM(geom ebiten.GeoM) *ETCell {
-	et.grid_lock.Lock()
-	defer et.grid_lock.Unlock()
-
-	et.geom = geom
-
-	return et
-}
-
-// postEvent helper
-func (et *ETCell) postEvent(ev tcell.Event) (err error) {
-	if et.event_channel == nil {
-		return
-	}
-
-	switch ev.(type) {
-	case *tcell.EventFocus:
-		if !et.enable_focus {
-			return
-		}
-	case *tcell.EventPaste:
-		if !et.enable_paste {
-			return
-		}
-	case *tcell.EventMouse:
-		if et.mouse_flags == tcell.MouseFlags(0) {
-			return
-		}
-	default:
-	}
-
-	et.event_channel <- ev
-	return
-}
-
-// Screen returns a struct compliant with the tcell.Screen interface
+// Screen returns the singleton tcell.Screen interface for this ETCell wrapper.
 func (et *ETCell) Screen() *ETCellScreen {
-	return &ETCellScreen{ETCell: et}
+	return &et.ETCellScreen
 }
 
-// Game returns the a struct compliant with ebiten.Game interface
-func (et *ETCell) Game() *ETCellGame {
+// Game returns the a new ebiten.Game interface for this ETCell wrapper.
+func (et *ETCell) NewGame() *ETCellGame {
 	return &ETCellGame{ETCell: et}
 }
 
@@ -222,7 +133,7 @@ func (et *ETCell) Run(runner func(screen tcell.Screen) error) error {
 		et.Exit(err)
 	}()
 
-	return ebiten.RunGame(et.Game())
+	return ebiten.RunGame(et.NewGame())
 }
 
 // Exit the tcell application.

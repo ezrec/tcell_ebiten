@@ -13,6 +13,10 @@ import (
 
 type ETCellGame struct {
 	*ETCell
+
+	GeoM ebiten.GeoM // This should only be set initially, or modified in Draw(), Update(), or Layout() overrides.
+
+	grid_draw []cell // Grid of cells, currently being drawn.
 }
 
 // Validate interface compliance
@@ -39,7 +43,7 @@ func (et *ETCellGame) Update() (err error) {
 
 	cursor_x, cursor_y := ebiten.CursorPosition()
 
-	mapping := et.geom
+	mapping := et.GeoM
 	mapping.Invert()
 	mouse_x, mouse_y := mapping.Apply(float64(cursor_x), float64(cursor_y))
 	mouse := image.Point{X: int(mouse_x), Y: int(mouse_y)}
@@ -178,14 +182,14 @@ func (et *ETCellGame) Draw(dst *ebiten.Image) {
 		var bg_options ebiten.DrawImageOptions
 		bg_options.ColorScale.ScaleWithColor(cell.bgColor)
 		bg_options.GeoM.Translate(x, y)
-		bg_options.GeoM.Concat(et.geom)
+		bg_options.GeoM.Concat(et.GeoM)
 
 		dst.DrawImage(et.cell_image, &bg_options)
 
 		var fg_options ebiten.DrawImageOptions
 		fg_options.ColorScale.ScaleWithColor(cell.fgColor)
 		fg_options.GeoM.Translate(x, y)
-		fg_options.GeoM.Concat(et.geom)
+		fg_options.GeoM.Concat(et.GeoM)
 
 		_, _, attr := cell.Style.Decompose()
 
@@ -210,7 +214,7 @@ func (et *ETCellGame) Draw(dst *ebiten.Image) {
 			opts.GeoM.Scale(1.0, 1.0/16.0)
 			opts.GeoM.Translate(x, y)
 			opts.GeoM.Translate(0, float64(et.cell_size.Y)*(1.0-1.0/8.0))
-			opts.GeoM.Concat(et.geom)
+			opts.GeoM.Concat(et.GeoM)
 			dst.DrawImage(et.cell_image, &opts)
 		}
 
@@ -222,7 +226,7 @@ func (et *ETCellGame) Draw(dst *ebiten.Image) {
 			opts.GeoM.Scale(1.0, 1.0/16.0)
 			opts.GeoM.Translate(x, y)
 			opts.GeoM.Translate(0, float64(et.cell_size.Y)/2.0-1.0/32.0)
-			opts.GeoM.Concat(et.geom)
+			opts.GeoM.Concat(et.GeoM)
 			dst.DrawImage(et.cell_image, &opts)
 		}
 	}
@@ -275,7 +279,7 @@ func (et *ETCellGame) Draw(dst *ebiten.Image) {
 		pos := image.Point{X: et.cursor.X * et.cell_size.X,
 			Y: et.cursor.Y * et.cell_size.Y}
 		opts.GeoM.Translate(float64(pos.X), float64(pos.Y))
-		opts.GeoM.Concat(et.geom)
+		opts.GeoM.Concat(et.GeoM)
 		dst.DrawImage(et.cell_image, &opts)
 	}
 }
