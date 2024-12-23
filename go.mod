@@ -4,7 +4,7 @@ go 1.23.1
 
 require (
 	github.com/gdamore/tcell/v2 v2.7.4
-	github.com/go-text/typesetting v0.2.0
+	github.com/go-text/typesetting v0.2.1
 	github.com/hajimehoshi/ebiten/v2 v2.8.5
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/image v0.23.0
