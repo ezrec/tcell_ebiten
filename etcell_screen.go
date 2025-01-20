@@ -196,8 +196,14 @@ func (et *ETCellScreen) HideCursor() {
 // SetCursorStyle is used to set the cursor style.  If the style
 // is not supported (or cursor styles are not supported at all),
 // then this will have no effect.
-func (et *ETCellScreen) SetCursorStyle(cs tcell.CursorStyle) {
+func (et *ETCellScreen) SetCursorStyle(cs tcell.CursorStyle, colors ...tcell.Color) {
 	et.cursor_style = cs
+}
+
+// SetTitle sets the title bar of the window.
+// Not implemented.
+func (et *ETCellScreen) SetTitle(title string) {
+	// not implemented
 }
 
 // Size returns the screen size as width, height.  This changes in
@@ -615,6 +621,18 @@ func (et *ETCellScreen) Tty() (tty tcell.Tty, is_tty bool) {
 	tty = nil
 	is_tty = false
 	return
+}
+
+// GetClipboard triggers an EventPaste with the clipboard as the Data()
+// Not implemented.
+func (et *ETCellScreen) GetClipboard() {
+	// Not implemented by tcell_ebiten.
+}
+
+// SetClipboard sets the content of the system clipboard to the bytes given.
+// Not implemented.
+func (et *ETCellScreen) SetClipboard(content []byte) {
+	// Not implemented by tcell_ebiten.
 }
 
 // postEvent helper
