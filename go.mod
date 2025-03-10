@@ -7,7 +7,7 @@ require (
 	github.com/go-text/typesetting v0.2.1
 	github.com/hajimehoshi/ebiten/v2 v2.8.6
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/image v0.23.0
+	golang.org/x/image v0.25.0
 )
 
 require (
@@ -21,9 +21,9 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/sync v0.10.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
