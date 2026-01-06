@@ -4,10 +4,11 @@ import (
 	"log"
 	"math/rand"
 
-	etcell "github.com/ezrec/tcell_ebiten"
-	"github.com/ezrec/tcell_ebiten/font"
+	etcell "github.com/ezrec/tcell_ebiten/v2"
+	"github.com/ezrec/tcell_ebiten/v2/font"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v3"
+	"github.com/gdamore/tcell/v3/color"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/gofont/gomonobold"
@@ -34,13 +35,9 @@ func (n *Noise) runner(screen tcell.Screen) (err error) {
 
 	n.updating = true
 
-	style := tcell.StyleDefault.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
+	style := tcell.StyleDefault.Background(color.White).Foreground(color.Black)
 
-	for {
-		event := screen.PollEvent()
-		if event == nil {
-			return
-		}
+	for event := range screen.EventQ() {
 		switch ev := event.(type) {
 		case *tcell.EventKey:
 			switch ev.Key() {
@@ -67,7 +64,7 @@ func (n *Noise) runner(screen tcell.Screen) (err error) {
 		for x := range width {
 			for y := range height {
 				randrune := rune(rand.Int() % (0x7f - 32))
-				randattr := tcell.AttrMask(rand.Int() & 0xff)
+				randattr := rand.Int() & 0x3f
 				randfg := tcell.NewRGBColor(
 					int32(rand.Int()&0xff),
 					int32(rand.Int()&0xff),
@@ -78,7 +75,12 @@ func (n *Noise) runner(screen tcell.Screen) (err error) {
 					int32(rand.Int()&0xff),
 					int32(rand.Int()&0xff),
 				)
-				style = style.Attributes(randattr)
+				style = style.Blink(((randattr >> 0) & 1) != 0)
+				style = style.Bold(((randattr >> 1) & 1) != 0)
+				style = style.Dim(((randattr >> 2) & 1) != 0)
+				style = style.Italic(((randattr >> 3) & 1) != 0)
+				style = style.Reverse(((randattr >> 4) & 1) != 0)
+				style = style.StrikeThrough(((randattr >> 5) & 1) != 0)
 				style = style.Foreground(randfg)
 				style = style.Background(randbg)
 				screen.SetContent(x, y, randrune, nil, style)
@@ -86,6 +88,8 @@ func (n *Noise) runner(screen tcell.Screen) (err error) {
 		}
 		screen.Show()
 	}
+
+	return
 }
 
 func main() {

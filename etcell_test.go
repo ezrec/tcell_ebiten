@@ -5,7 +5,7 @@ package tcell_ebiten
 import (
 	"testing"
 
-	"github.com/ezrec/tcell_ebiten/font"
+	"github.com/ezrec/tcell_ebiten/v2/font"
 
 	"golang.org/x/image/font/gofont/gomono"
 	"golang.org/x/image/font/gofont/gomonobold"
@@ -14,7 +14,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v3"
 
 	ebiten_text "github.com/hajimehoshi/ebiten/v2/text/v2"
 )

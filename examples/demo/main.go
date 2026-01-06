@@ -5,10 +5,9 @@ package main
 import (
 	"log"
 
-	etcell "github.com/ezrec/tcell_ebiten"
-	"github.com/ezrec/tcell_ebiten/font"
+	etcell "github.com/ezrec/tcell_ebiten/v2"
+	"github.com/ezrec/tcell_ebiten/v2/font"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/image/font/gofont/gomono"
 )
@@ -16,14 +15,13 @@ import (
 type DemoGame struct {
 	text_run    interface{ Run() error }
 	game_screen *etcell.ETCell
-	text_game   interface {
+	text_game   *etcell.ETCellGame
+	draw_game   interface {
 		ebiten.Game
 		LayoutF(x, y float64) (sx, sy float64)
 	}
-	draw_game interface {
-		ebiten.Game
-		LayoutF(x, y float64) (sx, sy float64)
-	}
+	y             float64
+	monitor_scale float64
 }
 
 func NewDemoGame() (dg *DemoGame) {
@@ -59,12 +57,18 @@ func (dg *DemoGame) Draw(screen *ebiten.Image) {
 }
 
 func (dg *DemoGame) Update() (err error) {
-	err = dg.text_game.Update()
+	err = dg.draw_game.Update()
 	if err != nil {
 		return
 	}
 
-	err = dg.draw_game.Update()
+	var geom ebiten.GeoM
+	geom.Translate(0, dg.y/2)
+	if dg.monitor_scale > 0.0 {
+		geom.Scale(dg.monitor_scale, dg.monitor_scale)
+	}
+	dg.text_game.GeoM = geom
+	err = dg.text_game.Update()
 	if err != nil {
 		return
 	}
@@ -72,12 +76,25 @@ func (dg *DemoGame) Update() (err error) {
 	return
 }
 
-func (dg *DemoGame) LayoutF(x, y float64) (float64, float64) {
-	ox, oy := dg.text_game.LayoutF(x, y)
-
-	dg.draw_game.LayoutF(ox, oy)
-
+func (dg *DemoGame) Layout(x, y int) (ox, oy int) {
+	ox = x
+	oy = y
+	dg.monitor_scale = 0.0
+	dg.y = float64(y)
 	return ox, oy
+}
+
+func (dg *DemoGame) LayoutF(x, y float64) (ox, oy float64) {
+	dg.monitor_scale = ebiten.Monitor().DeviceScaleFactor()
+	dg.y = y
+
+	dg.text_game.Layout(int(x), int(y)/2)
+
+	ox = x * dg.monitor_scale
+	oy = y * dg.monitor_scale
+	dg.draw_game.LayoutF(ox, oy/2)
+
+	return
 }
 
 func main() {
@@ -88,12 +105,17 @@ func main() {
 	ebiten.SetWindowTitle("etcell demo")
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 
-	err := dg.game_screen.Run(func(screen tcell.Screen) error {
+	go func() {
+		screen := dg.text_game.Screen()
 		screen.Init()
 		defer screen.Fini()
-		return dg.text_run.Run()
-	})
+		err := dg.text_run.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
+	err := ebiten.RunGame(dg)
 	if err != nil {
 		log.Fatal(err)
 	}

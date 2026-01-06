@@ -3,7 +3,8 @@
 package main
 
 import (
-	"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v3"
+	"github.com/gdamore/tcell/v3/color"
 )
 
 type TextGame struct {
@@ -22,15 +23,33 @@ func NewTextGame(screen tcell.Screen) (tg *TextGame) {
 	return
 }
 
-const color_span = int(tcell.ColorWhite-tcell.ColorBlack) + 1
+var (
+	color_span = []color.Color{
+		color.XTerm1,
+		color.XTerm2,
+		color.XTerm3,
+		color.XTerm4,
+		color.XTerm5,
+		color.XTerm6,
+		color.XTerm7,
+		color.XTerm8,
+		color.XTerm9,
+		color.XTerm10,
+		color.XTerm11,
+		color.XTerm12,
+		color.XTerm13,
+		color.XTerm14,
+		color.XTerm15,
+	}
+)
 
 func (tg *TextGame) draw_key(k tcell.Key, v int) {
 	// Determine postion
 	x := 0
 	y := 0
 	switch {
-	case k >= tcell.KeyCtrlSpace && k <= tcell.KeyCtrlUnderscore:
-		x = int(k - tcell.KeyCtrlSpace)
+	case k >= tcell.KeyCtrlA && k <= tcell.KeyCtrlZ:
+		x = int(k - tcell.KeyCtrlA)
 		y = 0
 	case k >= tcell.KeyRune:
 		x = int(k - tcell.KeyRune)
@@ -40,7 +59,7 @@ func (tg *TextGame) draw_key(k tcell.Key, v int) {
 		y = 2
 	}
 
-	color := tcell.ColorBlack + tcell.Color(v%color_span)
+	color := color_span[v%len(color_span)]
 	style := tcell.StyleDefault.Background(color)
 	tg.SetContent(1+x, 1+y, 'x', nil, style)
 }
@@ -49,7 +68,7 @@ func (tg *TextGame) draw_rune(r rune, v int) {
 	x := int(r) % 64
 	y := (int(r) / 64) + 4
 
-	color := tcell.ColorBlack + tcell.Color(v%color_span)
+	color := color_span[v%len(color_span)]
 	style := tcell.StyleDefault.Background(color)
 	tg.SetContent(1+x, 1+y, r, nil, style)
 }
@@ -68,7 +87,7 @@ func (tg *TextGame) redraw() {
 	// Draw border
 	max_x, max_y := tg.Size()
 
-	style := tcell.StyleDefault.Background(tcell.ColorWhite).Foreground(tcell.ColorBlack)
+	style := tcell.StyleDefault.Background(color.White).Foreground(color.Black)
 	for x := 1; x < (max_x - 1); x++ {
 		for _, y := range []int{0, max_y - 1} {
 			tg.SetContent(x, y, '─', nil, style)
@@ -88,7 +107,7 @@ func (tg *TextGame) redraw() {
 	tg.Show()
 }
 
-func (tg *TextGame) Run() error {
+func (tg *TextGame) Run() (err error) {
 	do_rune := func(r rune) {
 		v, ok := tg.seen_rune[r]
 		if !ok {
@@ -100,8 +119,7 @@ func (tg *TextGame) Run() error {
 		tg.draw_rune(r, v)
 	}
 
-	for {
-		event := tg.PollEvent()
+	for event := range tg.EventQ() {
 		switch ev := event.(type) {
 		case *tcell.EventPaste:
 			// tcell.EventPaste is not supported. Manually catch the
@@ -163,10 +181,14 @@ func (tg *TextGame) Run() error {
 			}
 			tg.draw_key(key, v)
 			if key == tcell.KeyRune {
-				r := ev.Rune()
-				do_rune(r)
+				r := ([]rune)(ev.Str())
+				if len(r) >= 1 {
+					do_rune(r[0])
+				}
 			}
 			tg.Show()
 		}
 	}
+
+	return
 }
