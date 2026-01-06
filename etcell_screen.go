@@ -7,9 +7,10 @@ import (
 	"image/color"
 	"sync"
 
-	"github.com/ezrec/tcell_ebiten/font"
+	"github.com/ezrec/tcell_ebiten/v2/font"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v3"
+	tcell_color "github.com/gdamore/tcell/v3/color"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -102,23 +103,20 @@ func (et *ETCellScreen) Fill(r rune, style tcell.Style) {
 	}
 }
 
-// SetCell is an older API, and will be removed.  Please use
-// SetContent instead; SetCell is implemented in terms of SetContent.
-func (et *ETCellScreen) SetCell(x int, y int, style tcell.Style, ch ...rune) {
-	if len(ch) == 0 {
-		ch = []rune{' '}
-	}
-	et.SetContent(x, y, ch[0], ch[1:], style)
+// ShowNotification is used to show a desktop notification, when the terminal
+// supports it.  Right now only terminals supporting OSC 777 support this.
+func (et *ETCellScreen) ShowNotification(title string, body string) {
+	// Nothing to do.
 }
 
-// GetContent returns the contents at the given location.  If the
+// Get returns the contents at the given location.  If the
 // coordinates are out of range, then the values will be 0, nil,
 // StyleDefault.  Note that the contents returned are logical contents
 // and may not actually be what is displayed, but rather are what will
 // be displayed if Show() or Sync() is called.  The width is the width
 // in screen cells; most often this will be 1, but some East Asian
 // characters and emoji require two cells.
-func (et *ETCellScreen) GetContent(x, y int) (primary rune, combining []rune, style tcell.Style, width int) {
+func (et *ETCellScreen) Get(x, y int) (str string, style tcell.Style, width int) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
@@ -132,8 +130,7 @@ func (et *ETCellScreen) GetContent(x, y int) (primary rune, combining []rune, st
 	n := y*et.grid_size.X + x
 	cell := et.grid[n]
 
-	primary = cell.Rune
-	combining = cell.Combining
+	str = string([]rune{cell.Rune})
 	style = cell.Style
 	width = 1
 
@@ -154,23 +151,55 @@ func (et *ETCellScreen) GetContent(x, y int) (primary rune, combining []rune, st
 // undefined effects.  Wide runes that are printed in the
 // last column will be replaced with a single width space on output.
 func (et *ETCellScreen) SetContent(x int, y int, primary rune, combining []rune, style tcell.Style) {
+	et.Put(x, y, string(append([]rune{primary}, combining...)), style)
+}
+
+// Put writes the first graphme of the given string with th
+// given style at the given coordinates. (Only the first grapheme
+// occupying either one or two cells is stored.) It returns the
+// remainder of the string, and the width displayed.
+func (et *ETCellScreen) Put(x int, y int, str string, style tcell.Style) (rest string, width int) {
 	et.grid_lock.Lock()
 	defer et.grid_lock.Unlock()
 
 	if x >= et.grid_size.X {
-		return
+		return str, 0
 	}
 	if y >= et.grid_size.Y {
-		return
+		return str, 0
 	}
 
 	n := y*et.grid_size.X + x
 
-	et.grid[n] = cell{
-		Rune:      primary,
-		Combining: combining,
-		Style:     style,
+	if len(str) == 0 {
+		str = " "
 	}
+
+	et.grid[n] = cell{
+		Rune:  ([]rune(str))[0],
+		Style: style,
+	}
+
+	rest = str[1:]
+	width = 1
+	return
+}
+
+func (et *ETCellScreen) PutStrStyled(x int, y int, str string, style tcell.Style) {
+	for len(str) > 0 {
+		var width int
+		str, width = et.Put(x, y, str, style)
+		if width == 0 {
+			break
+		}
+		x += width
+	}
+}
+
+// PutStr writes a string starting at the given position, using the
+// default style. The content is clipped to the screen dimensions.
+func (et *ETCellScreen) PutStr(x int, y int, str string) {
+	et.PutStrStyled(x, y, str, tcell.StyleDefault)
 }
 
 // SetStyle sets the default style to use when clearing the screen
@@ -218,71 +247,14 @@ func (et *ETCellScreen) Size() (width, height int) {
 	return
 }
 
-// ChannelEvents is an infinite loop that waits for an event and
-// channels it into the user provided channel ch.  Closing the
-// quit channel and calling the Fini method are cancellation
-// signals.  When a cancellation signal is received the method
-// returns after closing ch.
-//
-// This method should be used as a goroutine.
-//
-// NOTE: PollEvent should not be called while this method is running.
-func (et *ETCellScreen) ChannelEvents(ch chan<- tcell.Event, quit <-chan struct{}) {
-	go func() {
-		for {
-			select {
-			case ev := <-et.event_channel:
-				ch <- ev
-			case <-quit:
-				close(ch)
-				return
-			}
-		}
-	}()
-}
-
-// PollEvent waits for events to arrive.  Main application loops
-// must spin on this to prevent the application from stalling.
-// Furthermore, this will return nil if the Screen is finalized.
-func (et *ETCellScreen) PollEvent() (ev tcell.Event) {
-	ev = <-et.event_channel
-	return ev
-}
-
-// HasPendingEvent returns true if PollEvent would return an event
-// without blocking.  If the screen is stopped and PollEvent would
-// return nil, then the return value from this function is unspecified.
-// The purpose of this function is to allow multiple events to be collected
-// at once, to minimize screen redraws.
-func (et *ETCellScreen) HasPendingEvent() (has bool) {
-	return len(et.event_channel) != 0
-}
-
-// PostEvent tries to post an event into the event stream.  This
-// can fail if the event queue is full.  In that case, the event
-// is dropped, and ErrEventQFull is returned.
-func (et *ETCellScreen) PostEvent(ev tcell.Event) (err error) {
-	et.grid_lock.Lock()
-	defer et.grid_lock.Unlock()
-
-	err = et.postEvent(ev)
-
-	return
-}
-
-// Deprecated: PostEventWait is unsafe, and will be removed
-// in the future.
-//
-// PostEventWait is like PostEvent, but if the queue is full, it
-// blocks until there is space in the queue, making delivery
-// reliable.  However, it is VERY important that this function
-// never be called from within whatever event loop is polling
-// with PollEvent(), otherwise a deadlock may arise.
-//
-// For this reason, when using this function, the use of a
-// Goroutine is recommended to ensure no deadlock can occur.
-func (et *ETCellScreen) PostEventWait(ev tcell.Event) {
-	et.PostEvent(ev)
+// EventQ returns the channel of events, and is usable just like
+// any other channel.  Events can be injected by writing to
+// the channel, and they can be read by reading from it.  The
+// channel will remain open until the screen is completely shut down
+// with Fini().  Consequently, applications must not write to this
+// channel after Fini() is called.
+func (et *ETCellScreen) EventQ() chan tcell.Event {
+	return et.event_channel
 }
 
 // EnableMouse enables the mouse.  (If your terminal supports it.)
@@ -365,7 +337,9 @@ func (et *ETCellScreen) Show() {
 			if style == tcell.StyleDefault {
 				style = et.style_default
 			}
-			fg, bg, attr := style.Decompose()
+			attr := style.GetAttributes()
+			fg := style.GetForeground()
+			bg := style.GetBackground()
 
 			if cell.synced {
 				continue
@@ -377,11 +351,11 @@ func (et *ETCellScreen) Show() {
 			}
 
 			if fg == tcell.ColorDefault {
-				fg = tcell.ColorWhite
+				fg = tcell_color.White
 			}
 
 			if bg == tcell.ColorDefault {
-				bg = tcell.ColorBlack
+				bg = tcell_color.Black
 			}
 
 			// Reverse fg & bg if asked to.
@@ -658,5 +632,11 @@ func (et *ETCellScreen) postEvent(ev tcell.Event) (err error) {
 	}
 
 	et.event_channel <- ev
+	return
+}
+
+func (et *ETCellScreen) Terminal() (name, version string) {
+	name = "tcell_ebiten"
+	version = "v2"
 	return
 }

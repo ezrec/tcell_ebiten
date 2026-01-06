@@ -6,7 +6,7 @@ import (
 	"image"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
@@ -104,7 +104,7 @@ func (et *ETCellGame) Update() (err error) {
 				}
 				if e_key >= ebiten.KeyA && e_key <= ebiten.KeyZ {
 					t_key := tcell.KeyCtrlA + tcell.Key(e_key-ebiten.KeyA)
-					ev := tcell.NewEventKey(t_key, rune(0), mods & ^tcell.ModCtrl)
+					ev := tcell.NewEventKey(t_key, "", mods & ^tcell.ModCtrl)
 					et.postEvent(ev)
 					posted = true
 				}
@@ -112,7 +112,7 @@ func (et *ETCellGame) Update() (err error) {
 		} else {
 			key_runes := ebiten.AppendInputChars(nil)
 			for _, key_rune := range key_runes {
-				ev := tcell.NewEventKey(tcell.KeyRune, key_rune, mods & ^tcell.ModShift)
+				ev := tcell.NewEventKey(tcell.KeyRune, string([]rune{key_rune}), mods & ^tcell.ModShift)
 				et.postEvent(ev)
 				posted = true
 			}
@@ -125,7 +125,7 @@ func (et *ETCellGame) Update() (err error) {
 			}
 			t_key, ok := ebiten_key_map[e_key]
 			if ok {
-				ev := tcell.NewEventKey(t_key, rune(0), mods)
+				ev := tcell.NewEventKey(t_key, "", mods)
 				et.postEvent(ev)
 				posted = true
 			}
@@ -192,7 +192,7 @@ func (et *ETCellGame) Draw(dst *ebiten.Image) {
 		fg_options.GeoM.Translate(x, y)
 		fg_options.GeoM.Concat(geom)
 
-		_, _, attr := cell.Style.Decompose()
+		attr := cell.Style.GetAttributes()
 
 		// If now blinking, don't draw the text. We _do_ draw underlines and strikethroughs.
 		if (attr&tcell.AttrBlink) == 0 || !text_blink_phase {
@@ -209,7 +209,7 @@ func (et *ETCellGame) Draw(dst *ebiten.Image) {
 
 		// Draw underline, if needed.
 		// We define an underline as the top 1/16 of lower 1/8th of the cell.
-		if (attr & tcell.AttrUnderline) != 0 {
+		if cell.Style.HasUnderline() {
 			var opts ebiten.DrawImageOptions
 			opts.ColorScale.ScaleWithColor(cell.fgColor)
 			opts.GeoM.Scale(1.0, 1.0/16.0)

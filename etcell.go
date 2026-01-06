@@ -1,6 +1,6 @@
 // Copyright 2024, Jason S. McMullan <jason.mcmullan@gmail.com>
 
-// Package etcell provides an [github.com/hajimehoshi/ebiten/v2] to [github.com/gdamore/tcell/v2]
+// Package etcell provides an [github.com/hajimehoshi/ebiten/v2] to [github.com/gdamore/tcell/v3]
 // translation layer.
 package tcell_ebiten
 
@@ -8,8 +8,8 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/ezrec/tcell_ebiten/font"
-	"github.com/gdamore/tcell/v2"
+	"github.com/ezrec/tcell_ebiten/v2/font"
+	"github.com/gdamore/tcell/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
